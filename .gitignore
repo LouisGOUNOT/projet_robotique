@@ -9,6 +9,7 @@
 
 #build
 .lst
+/build
 
 # Linker output
 *.ilk
