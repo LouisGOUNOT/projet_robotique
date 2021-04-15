@@ -8,7 +8,7 @@
 *.elf
 
 #build
-*.lst
+.lst
 
 # Linker output
 *.ilk
