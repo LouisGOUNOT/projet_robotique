@@ -1,0 +1,13 @@
+FILE *f = fopen("print.txt", "w");
+if (f == NULL)
+{
+    printf("Error opening file!\n");
+    exit(1);
+}
+
+/* print integers and floats */
+
+fprintf(f, "lineWidth: %f\n", lineWidth);
+fprintf(f, "distance_cm: %f\n", distance_cm);
+
+fclose(f);
