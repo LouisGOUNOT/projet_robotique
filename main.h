@@ -12,7 +12,7 @@ extern "C" {
 
 //constants for the differents parts of the project
 #define IMAGE_BUFFER_SIZE		640
-#define WIDTH_SLOPE				20
+#define WIDTH_SLOPE				25
 #define MIN_LINE_WIDTH			IMAGE_BUFFER_SIZE/20
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			2 
