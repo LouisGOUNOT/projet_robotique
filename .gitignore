@@ -10,6 +10,7 @@
 #build
 .lst
 /build
+.DS_store
 
 # Linker output
 *.ilk
