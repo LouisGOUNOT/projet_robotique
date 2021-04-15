@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>TP4_CamReg</name>
+	<name>TP4_CamReg_correction</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -30,10 +30,11 @@
 			<type>2</type>
 			<locationURI>PARENT-2-PROJECT_LOC/lib/e-puck2_main-processor</locationURI>
 		</link>
-		<link>
-			<name>lib</name>
-			<type>2</type>
-			<location>C:/Users/clema/Desktop/Robotique/lib</location>
-		</link>
 	</linkedResources>
+	<variableList>
+		<variable>
+			<name>copy_PARENT</name>
+			<value>$%7BPARENT-6-PROJECT_LOC%7D/Documents/SmartGit/e-puck2-tps</value>
+		</variable>
+	</variableList>
 </projectDescription>
