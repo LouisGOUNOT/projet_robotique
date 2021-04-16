@@ -138,8 +138,9 @@ static THD_FUNCTION(ProcessImage, arg) {
     while(1){
     	//waits until an image has been captured
         chBSemWait(&image_ready_sem);
-		//gets the pointer to the array filled with the last image in RGB565    
-		img_buff_ptr = dcmi_get_last_image_ptr();
+//		//gets the pointer to the array filled with the last image in RGB565
+//        dcmi_enable_double_buffering();
+//		img_buff_ptr = dcmi_get_last_image_ptr();
 
 //		//Extracts only the red pixels
 //		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
@@ -159,23 +160,33 @@ static THD_FUNCTION(ProcessImage, arg) {
 		switch (target_color){
 
 			case 0:
+				//gets the pointer to the array filled with the last image in RGB565
+		        dcmi_enable_double_buffering();
+				img_buff_ptr = dcmi_get_last_image_ptr();
 				//Extracts only the red pixels
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts first 5bits of the first byte
 					//takes nothing from the second byte
-					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+					image[i/2] = (uint16_t)img_buff_ptr[i]&0x7FF;
 				}
 			  break;
 
 			case 1:
+				//gets the pointer to the array filled with the last image in RGB565
+		        dcmi_enable_double_buffering();
+				img_buff_ptr = dcmi_get_last_image_ptr();
 				//Extracts only the green pixels
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts middle 6bits
-					image[i/2] = (uint16_t)img_buff_ptr[i]&0x7E0;
+					image[i/2] = (uint16_t)img_buff_ptr[i]&0xF81F; //0x7E0
 				}
 			  break;
 
 			case 2:
+				//gets the pointer to the array filled with the last image in RGB565
+		        dcmi_enable_double_buffering();
+				//img_buff_ptr = dcmi_get_last_image_ptr();
+				img_buff_ptr = dcmi_get_second_buffer_ptr();
 				//Extracts only the blue pixels
 				//Comme couleur codée sur 16 bits et que bleu sur les 5 derniers
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
