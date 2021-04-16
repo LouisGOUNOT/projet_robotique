@@ -11,6 +11,7 @@
 
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
+static uint8_t target_color= 2; //Target color, 0 = red, 1 = green, 2 = blue // 2 par defaut pour tests
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -148,12 +149,42 @@ static THD_FUNCTION(ProcessImage, arg) {
 //		}
 
 	//Extracts only the blue pixels
-	//Comme couleur cod�e sur 16 bits et que bleu sur les 5 derniers
-	for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-		//extracts last 5bits of the second byte
-		//takes nothing from the first byte
-		image[i/2] = (uint16_t)img_buff_ptr[i]&0x1F;
-	}
+	//Comme couleur codée sur 16 bits et que bleu sur les 5 derniers
+//	for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+//		//extracts last 5bits of the second byte
+//		//takes nothing from the first byte
+//		image[i/2] = (uint16_t)img_buff_ptr[i]&0x1F;
+//	}
+
+		switch (target_color){
+
+			case 0:
+				//Extracts only the red pixels
+				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+					//extracts first 5bits of the first byte
+					//takes nothing from the second byte
+					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+				}
+			  break;
+
+			case 1:
+				//Extracts only the green pixels
+				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+					//extracts middle 6bits
+					image[i/2] = (uint16_t)img_buff_ptr[i]&0x7E0;
+				}
+			  break;
+
+			case 2:
+				//Extracts only the blue pixels
+				//Comme couleur codée sur 16 bits et que bleu sur les 5 derniers
+				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+					//extracts last 5bits of the second byte
+					//takes nothing from the first byte
+					image[i/2] = (uint16_t)img_buff_ptr[i]&0x1F;
+				}
+			  break;
+		}
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
@@ -171,6 +202,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		send_to_computer = !send_to_computer;
     }
 }
+
 
 float get_distance_cm(void){
 	return distance_cm;
