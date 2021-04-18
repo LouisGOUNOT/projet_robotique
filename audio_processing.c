@@ -74,6 +74,11 @@ void sound_remote(float* data){
 		left_motor_set_speed(600);
 		right_motor_set_speed(-600);
 	}
+	//go backward
+	else if(max_norm_index >= FREQ_BACKWARD_L && max_norm_index <= FREQ_BACKWARD_H){
+		left_motor_set_speed(-600);
+		right_motor_set_speed(-600);
+	}
 	else{
 		left_motor_set_speed(0);
 		right_motor_set_speed(0);
