@@ -12,6 +12,9 @@
 #include <arm_math.h>
 #include <process_image.h>
 
+#include <leds.h>
+
+
 //semaphore
 static BSEMAPHORE_DECL(sendToComputer_sem, TRUE);
 
@@ -60,14 +63,26 @@ void sound_remote(float* data){
 	//Target red
 	if(max_norm_index >= FREQ_RED_L && max_norm_index <= FREQ_RED_H){
 		select_target_color(0);
+		set_rgb_led(LED2,255,0,0);
+		set_rgb_led(LED4,255,0,0);
+		set_rgb_led(LED6,255,0,0);
+		set_rgb_led(LED8,255,0,0);
 	}
 	//Target green
 	else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
 		select_target_color(1);
+		set_rgb_led(LED2,0,255,0);
+		set_rgb_led(LED4,0,255,0);
+		set_rgb_led(LED6,0,255,0);
+		set_rgb_led(LED8,0,255,0);
 	}
 	//Target blue
 	else if(max_norm_index >= FREQ_BLUE_L && max_norm_index <= FREQ_BLUE_H){
 		select_target_color(2);
+		set_rgb_led(LED2,0,0,255);
+		set_rgb_led(LED4,0,0,255);
+		set_rgb_led(LED6,0,0,255);
+		set_rgb_led(LED8,0,0,255);
 	}
 }
 

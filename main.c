@@ -12,6 +12,7 @@
 #include <camera/po8030.h>
 #include <chprintf.h>
 #include <audio/microphone.h>
+#include <leds.h>
 
 #include <audio_processing.h>
 #include <fft.h>
@@ -19,6 +20,11 @@
 #include <arm_math.h>
 #include <pi_regulator.h>
 #include <process_image.h>
+
+messagebus_t bus;
+MUTEX_DECL(bus_lock);
+CONDVAR_DECL(bus_condvar);
+
 
 void SendUint8ToComputer(uint8_t* data, uint16_t size) 
 {
@@ -81,11 +87,18 @@ int main(void)
 	//inits the motors
 	motors_init();
 
+	//Demarre la communication spi necessaire pour les LEDs RGB
+	spi_comm_start();
+	messagebus_init(&bus, &bus_lock, &bus_condvar);
+
+
 	//stars the threads for the pi regulator and the processing of the image
 //	pi commenté pour tester la detection de couleur uniquement
 //	pi_regulator_start();
 	process_image_start();
-
+	set_rgb_led(LED4,255,0,0);
+	set_rgb_led(LED6,0,255,0);
+	set_rgb_led(LED8,0,0,255);
     //temp tab used to store values in complex_float format
     //needed bx doFFT_c
     static complex_float temp_tab[FFT_SIZE];
