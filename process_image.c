@@ -157,6 +157,9 @@ static THD_FUNCTION(ProcessImage, arg) {
 //		image[i/2] = (uint16_t)img_buff_ptr[i]&0x1F;
 //	}
 
+        //print f pour lire dans realterm si couleur recherchée bien modifiée
+        chprintf((BaseSequentialStream *)&SD3, "target_color = = %dus\n",target_color);
+
 		switch (target_color){
 
 			case 0:
@@ -226,4 +229,23 @@ uint16_t get_line_position(void){
 void process_image_start(void){
 	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO, ProcessImage, NULL);
 	chThdCreateStatic(waCaptureImage, sizeof(waCaptureImage), NORMALPRIO, CaptureImage, NULL);
+}
+
+void select_target_color(uint8_t color_id) {
+	switch (color_id){
+
+			case 0:
+				target_color = 0;
+
+			  break;
+
+			case 1:
+				target_color = 1;
+
+			  break;
+
+			case 2:
+				target_color = 2;
+			  break;
+		}
 }
