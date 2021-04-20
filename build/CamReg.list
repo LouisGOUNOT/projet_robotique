@@ -3120,7 +3120,7 @@ Disassembly of section .text:
  80024d6:	f810 2f01 	ldrb.w	r2, [r0, #1]!
  80024da:	1059      	asrs	r1, r3, #1
  80024dc:	3301      	adds	r3, #1
- 80024de:	f002 0207 	and.w	r2, r2, #7
+ 80024de:	f022 0207 	bic.w	r2, r2, #7
  80024e2:	f5b3 6fa0 	cmp.w	r3, #1280	; 0x500
  80024e6:	f808 2001 	strb.w	r2, [r8, r1]
  80024ea:	d1f4      	bne.n	80024d6 <ProcessImage+0xd6>

@@ -9,8 +9,8 @@
 #include <process_image.h>
 #include <audio_processing.h>
 
-#define MSK_RED1 0b00000111
-#define	MSK_RED2 0b11111111
+#define MSK_RED1 0b11111000
+#define	MSK_RED2 0b00000000
 #define MSK_GREEN1 0b00000111
 #define	MSK_GREEN2 0b11100000
 #define MSK_BLUE1 0b00000000
@@ -179,7 +179,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 				//Extracts only the red pixels
 				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
 						{
-							temp = (img_buff_ptr[i] & MSK_RED1);
+						temp = (img_buff_ptr[i] & MSK_RED1);
 							image[i/2] = temp;
 						}
 			  break;
@@ -206,7 +206,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 				//Comme couleur codée sur 16 bits et que bleu sur les 5 derniers
 				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
 				{
-					temp = (img_buff_ptr[i] & MSK_BLUE1) << 3;
+//					temp = (img_buff_ptr[i] & MSK_BLUE1) << 3;
 					temp = (img_buff_ptr[++i] & MSK_BLUE2) << 3;
 					image[i/2] = temp;
 				}
