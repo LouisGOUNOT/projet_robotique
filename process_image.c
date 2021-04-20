@@ -7,7 +7,14 @@
 #include <camera/po8030.h>
 
 #include <process_image.h>
+#include <audio_processing.h>
 
+#define MSK_RED1 0b00000111
+#define	MSK_RED2 0b11111111
+#define MSK_GREEN1 0b00000111
+#define	MSK_GREEN2 0b11100000
+#define MSK_BLUE1 0b00000000
+#define	MSK_BLUE2 0b00011111
 
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
@@ -136,6 +143,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 	bool send_to_computer = true;
 
     while(1){
+    	//check for audio changes
+
     	//waits until an image has been captured
         chBSemWait(&image_ready_sem);
 //		//gets the pointer to the array filled with the last image in RGB565
@@ -156,49 +165,55 @@ static THD_FUNCTION(ProcessImage, arg) {
 //		//takes nothing from the first byte
 //		image[i/2] = (uint16_t)img_buff_ptr[i]&0x1F;
 //	}
+//
+//        //print f pour lire dans realterm si couleur recherchée bien modifiée
+//        chprintf((BaseSequentialStream *)&SD3, "target_color = = %dus\n",target_color);
 
-        //print f pour lire dans realterm si couleur recherchée bien modifiée
-        chprintf((BaseSequentialStream *)&SD3, "target_color = = %dus\n",target_color);
-
+        uint8_t temp = 0;
 		switch (target_color){
 
 			case 0:
 				//gets the pointer to the array filled with the last image in RGB565
-		        dcmi_enable_double_buffering();
+//		        dcmi_enable_double_buffering();
 				img_buff_ptr = dcmi_get_last_image_ptr();
 				//Extracts only the red pixels
-				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					//extracts first 5bits of the first byte
-					//takes nothing from the second byte
-					image[i/2] = (uint16_t)img_buff_ptr[i]&0x7FF;
-				}
+				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
+						{
+							temp = (img_buff_ptr[i] & MSK_RED1);
+							image[i/2] = temp;
+						}
 			  break;
 
 			case 1:
 				//gets the pointer to the array filled with the last image in RGB565
-		        dcmi_enable_double_buffering();
+//		        dcmi_enable_double_buffering();
 				img_buff_ptr = dcmi_get_last_image_ptr();
 				//Extracts only the green pixels
-				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					//extracts middle 6bits
-					image[i/2] = (uint16_t)img_buff_ptr[i]&0xF81F; //0x7E0
-				}
+				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
+						{
+							temp = (img_buff_ptr[i] & MSK_GREEN1) << 3;
+							temp = temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 5);
+							image[i/2] = temp;
+						}
 			  break;
 
 			case 2:
 				//gets the pointer to the array filled with the last image in RGB565
-		        dcmi_enable_double_buffering();
+//		        dcmi_enable_double_buffering();
 				//img_buff_ptr = dcmi_get_last_image_ptr();
 				img_buff_ptr = dcmi_get_second_buffer_ptr();
 				//Extracts only the blue pixels
 				//Comme couleur codée sur 16 bits et que bleu sur les 5 derniers
-				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					//extracts last 5bits of the second byte
-					//takes nothing from the first byte
-					image[i/2] = (uint16_t)img_buff_ptr[i]&0x1F;
+				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
+				{
+					temp = (img_buff_ptr[i] & MSK_BLUE1) << 3;
+					temp = (img_buff_ptr[++i] & MSK_BLUE2) << 3;
+					image[i/2] = temp;
 				}
 			  break;
 		}
+
+
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
