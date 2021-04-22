@@ -37,7 +37,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		wrong_line = 0;
 		//search for a begin
 		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
-		{ 
+		{
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image
 		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < mean)
@@ -51,7 +51,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE) && begin)
 		{
 		    stop = 0;
-		    
+
 		    while(stop == 0 && i < IMAGE_BUFFER_SIZE)
 		    {
 		        if(buffer[i] > mean && buffer[i-WIDTH_SLOPE] < mean)
@@ -89,6 +89,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 	}else{
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
+		chprintf((BaseSequentialStream *)&SD3, "width= %d\n", width);
 	}
 
 	//sets a maximum width or returns the measured width
@@ -96,7 +97,10 @@ uint16_t extract_line_width(uint8_t *buffer){
 		return PXTOCM/MAX_DISTANCE;
 	}else{
 		return width;
+
 	}
+
+
 }
 
 static THD_WORKING_AREA(waCaptureImage, 256);
@@ -106,7 +110,7 @@ static THD_FUNCTION(CaptureImage, arg) {
     (void)arg;
 
 	//Takes pixels 0 to IMAGE_BUFFER_SIZE of the line 10 + 11 (minimum 2 lines because reasons)
-	po8030_advanced_config(FORMAT_RGB565, 0, 10, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+	po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
@@ -153,6 +157,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth){
 			distance_cm = PXTOCM/lineWidth;
+			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
 		}
 
 		if(send_to_computer){
