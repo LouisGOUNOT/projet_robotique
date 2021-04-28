@@ -9,6 +9,7 @@
 #include <motors.h>
 #include <pi_regulator.h>
 #include <process_image.h>
+#include <obstacle.h>
 
 //simple PI regulator implementation
 int16_t pi_regulator(float distance, float goal){

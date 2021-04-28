@@ -9,6 +9,8 @@
 #include <usbcfg.h>
 #include <main.h>
 #include <motors.h>
+#include "sensors/proximity.h"
+#include "spi_comm.h"
 #include <camera/po8030.h>
 #include <chprintf.h>
 
@@ -40,11 +42,16 @@ int main(void)
     halInit();
     chSysInit();
     mpu_init();
+  	/** Inits the Inter Process Communication bus. */
+    messagebus_init(&bus, &bus_lock, &bus_condvar);
 
     //starts the serial communication
     serial_start();
     //start the USB communication
     usb_start();
+    //Start the SPI Communication
+    spi_comm_start();
+
     //starts the camera
     dcmi_start();
 	po8030_start();
@@ -55,8 +62,19 @@ int main(void)
 	pi_regulator_start();
 	process_image_start();
 
+	//start the threads for the detector of proximity
+	proximity_start();
+	
+	static uint16_t proxi[NUMBER_OF_SENSORS]
+
+
+
     /* Infinite loop. */
     while (1) {
+    		for (uint8_t i=0; i<NUMBER_OF_SENSORS;i++){
+	proxi(i)=get_proxi(i);
+	chprintf((BaseSequentialStream *)&SD3, "proximit= %d\n", proxi(i));
+}
     	//waits 1 second
         chThdSleepMilliseconds(1000);
     }

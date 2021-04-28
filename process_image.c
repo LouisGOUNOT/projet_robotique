@@ -9,6 +9,7 @@
 #include <process_image.h>
 
 
+
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 
@@ -157,7 +158,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth){
 			distance_cm = PXTOCM/lineWidth;
-			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
+			//chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
 		}
 
 		if(send_to_computer){
