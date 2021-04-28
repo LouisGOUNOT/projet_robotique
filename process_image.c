@@ -90,7 +90,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 	}else{
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
-		chprintf((BaseSequentialStream *)&SD3, "width= %d\n", width);
+		//chprintf((BaseSequentialStream *)&SD3, "width= %d\n", width);
 	}
 
 	//sets a maximum width or returns the measured width
