@@ -26,6 +26,18 @@ extern "C" {
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 
 #define NUMSENSOR				8
+#define REACHED_FRONT			1
+#define DIST_OBS_MAX			2 // [cm]
+
+//numero des différents capteur de proximité
+#define FRONT_RIGHT				0
+#define FRONT_RIGHT45			1
+#define RIGHT 					2
+#define BACK_RIGHT				3
+#define BACK_LEFT				4
+#define LEFT 					5
+#define FRONT_LEFT45 			6
+#define FRONT_LEFT 				7
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;

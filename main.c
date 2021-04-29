@@ -69,16 +69,26 @@ int main(void)
 	//start the threads for the detector of proximity
 	proximity_start();
 
-	static uint16_t proxi[NUMSENSOR];
-	static int distance[NUMSENSOR];
+	obstacle_start();
+
+	//static uint16_t proxi[NUMSENSOR];
+	//static int distance[NUMSENSOR];
 
     /* Infinite loop. */
     while (1) {
 
+
+/**
+    for (uint8_t i=0; i<NUMSENSOR;i++){
+    		proxi[i]=get_prox(i);
+  			distance[i]=5296/pow(proxi[i],0.98);
+
+  		}
+    		chprintf((BaseSequentialStream *)&SD3, "proximit= %d\n", distance[0]);
+ */
     	//waits 1 second
-       chThdSleepMilliseconds(1000);
-       
-	}
+        chThdSleepMilliseconds(1000);
+}
 
 }
 #define STACK_CHK_GUARD 0xe2dee396
