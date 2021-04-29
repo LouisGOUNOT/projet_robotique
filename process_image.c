@@ -9,12 +9,26 @@
 #include <process_image.h>
 #include <audio_processing.h>
 
+/*
+ * masques de base
+ */
 #define MSK_RED1 0b11111000
 #define	MSK_RED2 0b00000000
 #define MSK_GREEN1 0b00000111
 #define	MSK_GREEN2 0b11100000
 #define MSK_BLUE1 0b00000000
 #define	MSK_BLUE2 0b00011111
+
+/*
+ * masques avec couleurs complémentaires, prends les 4 bits les plus importants
+ */
+#define MSK_RED1 0b00000111
+#define	MSK_RED2 0b11111111
+#define	MSK_RED3 0b00011110
+#define MSK_GREEN1 0b11110000
+#define	MSK_GREEN2 0b00011110
+#define MSK_BLUE1 0b11111111
+#define	MSK_BLUE2 0b10000000
 
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
@@ -169,6 +183,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 //        //print f pour lire dans realterm si couleur recherchée bien modifiée
 //        chprintf((BaseSequentialStream *)&SD3, "target_color = = %dus\n",target_color);
 
+
         uint8_t temp = 0;
 		switch (target_color){
 
@@ -177,11 +192,17 @@ static THD_FUNCTION(ProcessImage, arg) {
 //		        dcmi_enable_double_buffering();
 				img_buff_ptr = dcmi_get_last_image_ptr();
 				//Extracts only the red pixels
-				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
-						{
-						temp = (img_buff_ptr[i] & MSK_RED1);
-							image[i/2] = temp;
-						}
+//				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
+//						{
+//					temp = (img_buff_ptr[i] & MSK_RED1);
+////					temp = (img_buff_ptr[++i] & MSK_RED2);
+//					image[i/2] = temp;
+//						}
+					for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+						//extracts last 5bits of the second byte
+						//takes nothing from the first byte
+						image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+					}
 			  break;
 
 			case 1:
@@ -189,10 +210,10 @@ static THD_FUNCTION(ProcessImage, arg) {
 //		        dcmi_enable_double_buffering();
 				img_buff_ptr = dcmi_get_last_image_ptr();
 				//Extracts only the green pixels
-				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
+				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
 						{
-							temp = (img_buff_ptr[i] & MSK_GREEN1) << 3;
-							temp = temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 5);
+							temp = (img_buff_ptr[i] & MSK_GREEN1) << 5; 00000111
+							temp = temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 3);
 							image[i/2] = temp;
 						}
 			  break;
@@ -200,13 +221,13 @@ static THD_FUNCTION(ProcessImage, arg) {
 			case 2:
 				//gets the pointer to the array filled with the last image in RGB565
 //		        dcmi_enable_double_buffering();
-				//img_buff_ptr = dcmi_get_last_image_ptr();
-				img_buff_ptr = dcmi_get_second_buffer_ptr();
+				img_buff_ptr = dcmi_get_last_image_ptr();
+//				img_buff_ptr = dcmi_get_second_buffer_ptr();
 				//Extracts only the blue pixels
 				//Comme couleur codée sur 16 bits et que bleu sur les 5 derniers
-				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
+				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
 				{
-//					temp = (img_buff_ptr[i] & MSK_BLUE1) << 3;
+					temp = (img_buff_ptr[i] & MSK_BLUE1);
 					temp = (img_buff_ptr[++i] & MSK_BLUE2) << 3;
 					image[i/2] = temp;
 				}

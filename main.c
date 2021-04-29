@@ -20,10 +20,12 @@
 #include <arm_math.h>
 #include <pi_regulator.h>
 #include <process_image.h>
+#include <po8030.h>
 
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
 CONDVAR_DECL(bus_condvar);
+
 
 
 void SendUint8ToComputer(uint8_t* data, uint16_t size) 
@@ -90,6 +92,7 @@ int main(void)
 	//Demarre la communication spi necessaire pour les LEDs RGB
 	spi_comm_start();
 	messagebus_init(&bus, &bus_lock, &bus_condvar);
+	po8030_set_awb(0);
 
 
 	//stars the threads for the pi regulator and the processing of the image
