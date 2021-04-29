@@ -32,3 +32,29 @@ uint8_t obstacle_detection(void){
     		return REACHED_FRONT;
     }    
 }
+
+static THD_WORKING_AREA(waObstacle, 256);
+static THD_FUNCTION(Obstacle, arg) {
+
+    chRegSetThreadName(__FUNCTION__);
+    (void)arg;
+
+    systime_t time;
+
+    while(1){
+      	time = chVTGetSystemTime();
+      	reached_distance=obstacle_detection();
+
+        //100Hz
+        chThdSleepUntilWindowed(time, time + MS2ST(10));
+    }
+}
+ uint8_t distance_detected(void){
+ 	return reached_distance;
+ }
+
+ void obstacle_start(void){
+	chThdCreateStatic(waObstacle, sizeof(waObstacle), NORMALPRIO, Obstacle, NULL);
+}
+
+
