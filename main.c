@@ -75,17 +75,10 @@ int main(void)
     /* Infinite loop. */
     while (1) {
 
-
-
-    	for (uint8_t i=0; i<NUMSENSOR;i++){
-    			proxi[i]=get_prox(i);
-    			distance[i]=5296/pow(proxi[i],0.98);
-    			
-    		}
-    		chprintf((BaseSequentialStream *)&SD3, "proximit= %d\n", distance[0]);
     	//waits 1 second
-       // chThdSleepMilliseconds(1000);
-}
+       chThdSleepMilliseconds(1000);
+       
+	}
 
 }
 #define STACK_CHK_GUARD 0xe2dee396

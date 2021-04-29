@@ -1,6 +1,6 @@
 #ifndef OBSTACLE_H_
 #define OBSTACLE_H_
 
-uint8_t distance_obstacle(void);
+uint8_t conversion_cm(void);
 
 #endif 
