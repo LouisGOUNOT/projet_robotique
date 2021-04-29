@@ -20,7 +20,7 @@
 #include <arm_math.h>
 #include <pi_regulator.h>
 #include <process_image.h>
-#include <po8030.h>
+//#include <po8030.h>
 
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
@@ -84,6 +84,10 @@ int main(void)
     //starts the camera
     dcmi_start();
 	po8030_start();
+	//enable auto white balance
+	po8030_set_awb(0);
+	//régule contraste avec cste 0< <255
+	po8030_set_contrast(55);
     //starts timer 12
     timer12_start();
 	//inits the motors
@@ -92,7 +96,7 @@ int main(void)
 	//Demarre la communication spi necessaire pour les LEDs RGB
 	spi_comm_start();
 	messagebus_init(&bus, &bus_lock, &bus_condvar);
-	po8030_set_awb(0);
+//	po8030_set_awb(0);
 
 
 	//stars the threads for the pi regulator and the processing of the image

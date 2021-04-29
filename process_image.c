@@ -9,26 +9,18 @@
 #include <process_image.h>
 #include <audio_processing.h>
 
+#include <leds.h>
+
 /*
  * masques de base
  */
 #define MSK_RED1 0b11111000
 #define	MSK_RED2 0b00000000
 #define MSK_GREEN1 0b00000111
-#define	MSK_GREEN2 0b11100000
+#define	MSK_GREEN2 0b11000000
 #define MSK_BLUE1 0b00000000
 #define	MSK_BLUE2 0b00011111
 
-/*
- * masques avec couleurs complémentaires, prends les 4 bits les plus importants
- */
-#define MSK_RED1 0b00000111
-#define	MSK_RED2 0b11111111
-#define	MSK_RED3 0b00011110
-#define MSK_GREEN1 0b11110000
-#define	MSK_GREEN2 0b00011110
-#define MSK_BLUE1 0b11111111
-#define	MSK_BLUE2 0b10000000
 
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
@@ -121,6 +113,84 @@ uint16_t extract_line_width(uint8_t *buffer){
 	}
 }
 
+uint16_t extract_line_mean(uint8_t *buffer){
+
+	uint16_t i = 0, begin = 0, end = 0, width = 0;
+	uint8_t stop = 0, wrong_line = 0, line_not_found = 0;
+	uint32_t mean = 0;
+
+	static uint16_t last_width = PXTOCM/GOAL_DISTANCE;
+
+	//performs an average
+	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){
+		mean += buffer[i];
+	}
+	mean /= IMAGE_BUFFER_SIZE;
+
+	do{
+		wrong_line = 0;
+		//search for a begin
+		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
+		{
+			//the slope must at least be WIDTH_SLOPE wide and is compared
+		    //to the mean of the image
+		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < mean)
+		    {
+		        begin = i;
+		        stop = 1;
+		    }
+		    i++;
+		}
+		//if a begin was found, search for an end
+		if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE) && begin)
+		{
+		    stop = 0;
+
+		    while(stop == 0 && i < IMAGE_BUFFER_SIZE)
+		    {
+		        if(buffer[i] > mean && buffer[i-WIDTH_SLOPE] < mean)
+		        {
+		            end = i;
+		            stop = 1;
+		        }
+		        i++;
+		    }
+		    //if an end was not found
+		    if (i > IMAGE_BUFFER_SIZE || !end)
+		    {
+		        line_not_found = 1;
+		    }
+		}
+		else//if no begin was found
+		{
+		    line_not_found = 1;
+		}
+
+		//if a line too small has been detected, continues the search
+		if(!line_not_found && (end-begin) < MIN_LINE_WIDTH){
+			i = end;
+			begin = 0;
+			end = 0;
+			stop = 0;
+			wrong_line = 1;
+		}
+	}while(wrong_line);
+
+	if(line_not_found){
+		begin = 0;
+		end = 0;
+		width = last_width;
+	}else{
+		last_width = width = (end - begin);
+		line_position = (begin + end)/2; //gives the line position.
+	}
+	mean = 0;
+	for(uint16_t i = begin ; i < end ; i++){
+		mean += buffer[i];
+	}
+	return mean;
+}
+
 static THD_WORKING_AREA(waCaptureImage, 256);
 static THD_FUNCTION(CaptureImage, arg) {
 
@@ -153,88 +223,121 @@ static THD_FUNCTION(ProcessImage, arg) {
 	uint8_t *img_buff_ptr;
 	uint8_t image[IMAGE_BUFFER_SIZE] = {0};
 	uint16_t lineWidth = 0;
+	uint8_t red_temp;
+	uint8_t green_temp;
+	uint8_t blue_temp;
+	uint32_t redMean = 0;
+	uint32_t greenMean = 0;
+	uint32_t blueMean = 0;
+
 
 	bool send_to_computer = true;
 
     while(1){
-    	//check for audio changes
-
     	//waits until an image has been captured
         chBSemWait(&image_ready_sem);
-//		//gets the pointer to the array filled with the last image in RGB565
-//        dcmi_enable_double_buffering();
-//		img_buff_ptr = dcmi_get_last_image_ptr();
 
-//		//Extracts only the red pixels
-//		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-//			//extracts first 5bits of the first byte
-//			//takes nothing from the second byte
-//			image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+//			switch (target_color){
+//
+//			case 0:
+//				// detecte pixels verts et bleus pour trouver rouge
+//				img_buff_ptr = dcmi_get_last_image_ptr();
+//
+//				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
+//					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
+//					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
+//					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
+//					blue_temp = (img_buff_ptr[i] & MSK_BLUE2);
+//					image[i/2] = green_temp + blue_temp;
+//				}
+//			  break;
+//
+//			case 1:
+//				// detecte pixels rouges et bleus pour trouver vert
+//				img_buff_ptr = dcmi_get_last_image_ptr();
+//				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
+//					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
+//					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
+//					blue_temp = (img_buff_ptr[++i] & MSK_BLUE2);
+//					image[i/2] = red_temp + blue_temp;
+//				}
+//			  break;
+//
+//			case 2:
+//				// detecte pixels rouges et verts pour trouver bleu
+//				img_buff_ptr = dcmi_get_last_image_ptr();
+//				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
+//					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
+//					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
+//					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
+//					image[i/2] = red_temp + green_temp;
+//				}
+//			  break;
 //		}
 
-	//Extracts only the blue pixels
-	//Comme couleur codée sur 16 bits et que bleu sur les 5 derniers
-//	for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-//		//extracts last 5bits of the second byte
-//		//takes nothing from the first byte
-//		image[i/2] = (uint16_t)img_buff_ptr[i]&0x1F;
-//	}
-//
-//        //print f pour lire dans realterm si couleur recherchée bien modifiée
-//        chprintf((BaseSequentialStream *)&SD3, "target_color = = %dus\n",target_color);
 
-
-        uint8_t temp = 0;
-		switch (target_color){
-
-			case 0:
-				//gets the pointer to the array filled with the last image in RGB565
-//		        dcmi_enable_double_buffering();
+				// detecte pixels verts et bleus pour trouver rouge
 				img_buff_ptr = dcmi_get_last_image_ptr();
-				//Extracts only the red pixels
-//				for(int i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
-//						{
-//					temp = (img_buff_ptr[i] & MSK_RED1);
-////					temp = (img_buff_ptr[++i] & MSK_RED2);
-//					image[i/2] = temp;
-//						}
-					for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-						//extracts last 5bits of the second byte
-						//takes nothing from the first byte
-						image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
-					}
-			  break;
 
-			case 1:
-				//gets the pointer to the array filled with the last image in RGB565
-//		        dcmi_enable_double_buffering();
-				img_buff_ptr = dcmi_get_last_image_ptr();
-				//Extracts only the green pixels
-				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
-						{
-							temp = (img_buff_ptr[i] & MSK_GREEN1) << 5; 00000111
-							temp = temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 3);
-							image[i/2] = temp;
-						}
-			  break;
+				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
+					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
+					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
+					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
 
-			case 2:
-				//gets the pointer to the array filled with the last image in RGB565
-//		        dcmi_enable_double_buffering();
-				img_buff_ptr = dcmi_get_last_image_ptr();
-//				img_buff_ptr = dcmi_get_second_buffer_ptr();
-				//Extracts only the blue pixels
-				//Comme couleur codée sur 16 bits et que bleu sur les 5 derniers
-				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++)
-				{
-					temp = (img_buff_ptr[i] & MSK_BLUE1);
-					temp = (img_buff_ptr[++i] & MSK_BLUE2) << 3;
-					image[i/2] = temp;
+					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
+					blue_temp = (img_buff_ptr[i] & MSK_BLUE2);
+					image[i/2] = green_temp + blue_temp;
 				}
-			  break;
-		}
 
+				redMean = extract_line_mean(image);
+				uint8_t suspected_color = 0;
+				// detecte pixels rouges et bleus pour trouver vert
+				img_buff_ptr = dcmi_get_last_image_ptr();
+				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
+					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
+					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
+					blue_temp = (img_buff_ptr[++i] & MSK_BLUE2);
+					image[i/2] = red_temp + blue_temp;
+				}
+				greenMean = extract_line_mean(image);
+				if (greenMean > redMean){
+					suspected_color = 1;
+				}
+				// detecte pixels rouges et verts pour trouver bleu
+				img_buff_ptr = dcmi_get_last_image_ptr();
+				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
+					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
+					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
+					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
+					image[i/2] = red_temp + green_temp;
+				}
+				blueMean = extract_line_mean(image);
+				if ((blueMean > greenMean)&&(blueMean > redMean)){
+					suspected_color = 2;
+				}
+				switch(suspected_color)
+				{
+					case 0:
+						set_rgb_led(LED2,255,0,0);
+						set_rgb_led(LED4,255,0,0);
+						set_rgb_led(LED6,255,0,0);
+						set_rgb_led(LED8,255,0,0);
+					break;
 
+					case 1:
+						set_rgb_led(LED2,0,255,0);
+						set_rgb_led(LED4,0,255,0);
+						set_rgb_led(LED6,0,255,0);
+						set_rgb_led(LED8,0,255,0);
+					break;
+
+					case 2:
+						set_rgb_led(LED2,0,0,255);
+						set_rgb_led(LED4,0,0,255);
+						set_rgb_led(LED6,0,0,255);
+						set_rgb_led(LED8,0,0,255);
+					break;
+				}
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
