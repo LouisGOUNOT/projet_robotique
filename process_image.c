@@ -22,9 +22,10 @@
 #define	MSK_BLUE2 0b00011111
 
 
+
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
-static uint8_t target_color= 2; //Target color, 0 = red, 1 = green, 2 = blue // 2 par defaut pour tests
+static uint8_t target_color= 0; //Target color, 0 = red, 1 = green, 2 = blue // 2 par defaut pour tests
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -104,6 +105,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
 	}
+	chprintf((BaseSequentialStream *)&SD3, "width= %f\n", width);
 
 	//sets a maximum width or returns the measured width
 	if((PXTOCM/width) > MAX_DISTANCE){
@@ -134,7 +136,7 @@ uint16_t extract_line_mean(uint8_t *buffer){
 		{
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image
-		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < mean)
+		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < MEAN_CORRECTION*mean)
 		    {
 		        begin = i;
 		        stop = 1;
@@ -188,6 +190,10 @@ uint16_t extract_line_mean(uint8_t *buffer){
 	for(uint16_t i = begin ; i < end ; i++){
 		mean += buffer[i];
 	}
+	mean = mean/(end-begin);
+	chprintf((BaseSequentialStream *)&SD3, "begin= %d\n", begin);
+	chprintf((BaseSequentialStream *)&SD3, "end= %d\n", end);
+	chprintf((BaseSequentialStream *)&SD3, "mean= %d\n", mean);
 	return mean;
 }
 
@@ -198,7 +204,7 @@ static THD_FUNCTION(CaptureImage, arg) {
     (void)arg;
 
 	//Takes pixels 0 to IMAGE_BUFFER_SIZE of the line 10 + 11 (minimum 2 lines because reasons)
-	po8030_advanced_config(FORMAT_RGB565, 0, 10, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+	po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
@@ -229,7 +235,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 	uint32_t redMean = 0;
 	uint32_t greenMean = 0;
 	uint32_t blueMean = 0;
-
+	uint8_t suspected_color = 0;
+	uint8_t meanRatio = 0;
 
 	bool send_to_computer = true;
 
@@ -280,7 +287,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 				img_buff_ptr = dcmi_get_last_image_ptr();
 
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
-					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
+//					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
 					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
 					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
 
@@ -288,23 +295,36 @@ static THD_FUNCTION(ProcessImage, arg) {
 					blue_temp = (img_buff_ptr[i] & MSK_BLUE2);
 					image[i/2] = green_temp + blue_temp;
 				}
-
+				if (target_color == 0){
+					if(send_to_computer){
+						//sends to the computer the image
+						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
+					}
+					//invert the bool
+					send_to_computer = !send_to_computer;
+				}
 				redMean = extract_line_mean(image);
-				uint8_t suspected_color = 0;
-				// detecte pixels rouges et bleus pour trouver vert
-				img_buff_ptr = dcmi_get_last_image_ptr();
-				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
-					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
-					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
-					blue_temp = (img_buff_ptr[++i] & MSK_BLUE2);
-					image[i/2] = red_temp + blue_temp;
-				}
-				greenMean = extract_line_mean(image);
-				if (greenMean > redMean){
-					suspected_color = 1;
-				}
+
+
+//				// detecte pixels rouges et bleus pour trouver vert
+//				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
+//					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
+//					blue_temp = (img_buff_ptr[++i] & MSK_BLUE2);
+//					image[i/2] = red_temp + blue_temp;
+//				}
+//				greenMean = extract_line_mean(image);
+//				if (greenMean < redMean){
+//					suspected_color = 1;
+//				}
+//				if (target_color == 1){
+//					if(send_to_computer){
+//						//sends to the computer the image
+//						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
+//					}
+//					//invert the bool
+//					send_to_computer = !send_to_computer;
+//				}
 				// detecte pixels rouges et verts pour trouver bleu
-				img_buff_ptr = dcmi_get_last_image_ptr();
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
 					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
 					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
@@ -312,47 +332,56 @@ static THD_FUNCTION(ProcessImage, arg) {
 					image[i/2] = red_temp + green_temp;
 				}
 				blueMean = extract_line_mean(image);
-				if ((blueMean > greenMean)&&(blueMean > redMean)){
-					suspected_color = 2;
+
+				if (target_color == 2){
+					if(send_to_computer){
+						//sends to the computer the image
+						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
+					}
+					//invert the bool
+					send_to_computer = !send_to_computer;
 				}
-				switch(suspected_color)
-				{
-					case 0:
-						set_rgb_led(LED2,255,0,0);
-						set_rgb_led(LED4,255,0,0);
-						set_rgb_led(LED6,255,0,0);
-						set_rgb_led(LED8,255,0,0);
-					break;
+				float meanRatio = blueMean/redMean;
+				chprintf((BaseSequentialStream *)&SD3, "blueMean= %d\n", blueMean);
+				chprintf((BaseSequentialStream *)&SD3, "redMean= %d\n", redMean);
+				chprintf((BaseSequentialStream *)&SD3, "meanRatio= %d\n", meanRatio);
 
-					case 1:
-						set_rgb_led(LED2,0,255,0);
-						set_rgb_led(LED4,0,255,0);
-						set_rgb_led(LED6,0,255,0);
-						set_rgb_led(LED8,0,255,0);
-					break;
-
-					case 2:
-						set_rgb_led(LED2,0,0,255);
+				//search for a line in the image and gets its width in pixels
+				lineWidth = extract_line_width(image);
+				chprintf((BaseSequentialStream *)&SD3, "lineWidth= %d\n", lineWidth);
+				if((blueMean + redMean) > 1){
+					if((meanRatio < 1.5)&&(meanRatio > 0.5))
+					{
 						set_rgb_led(LED4,0,0,255);
 						set_rgb_led(LED6,0,0,255);
 						set_rgb_led(LED8,0,0,255);
-					break;
+					}
+					else
+					{
+						set_rgb_led(LED4,255,0,0);
+						set_rgb_led(LED6,255,0,0);
+						set_rgb_led(LED8,255,0,0);
+					}
+				}
+				else{
+					set_rgb_led(LED4,0,0,0);
+					set_rgb_led(LED6,0,0,0);
+					set_rgb_led(LED8,0,0,0);
 				}
 
-		//search for a line in the image and gets its width in pixels
-		lineWidth = extract_line_width(image);
+
 
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth){
 			distance_cm = PXTOCM/lineWidth;
 		}
 
-		if(send_to_computer){
-			//sends to the computer the image
-			SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
-		}
-		//invert the bool
-		send_to_computer = !send_to_computer;
+//		if(send_to_computer){
+//			//sends to the computer the image
+//			SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
+//		}
+//		//invert the bool
+//		send_to_computer = !send_to_computer;
     }
 }
 
