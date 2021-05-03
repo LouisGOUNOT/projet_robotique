@@ -57,20 +57,39 @@ static THD_FUNCTION(PiRegulator, arg) {
         time = chVTGetSystemTime();
 
         if (obstacle_detected()){
-        
-        		chprintf((BaseSequentialStream *)&SD3, "front");
-        		speed = 0;
-        		speed_correction=500;
-        }
+        	switch(obstacle_detected()){
 
-        
+        		case REACHED_FRONT :
+        			speed = 0;
+        			speed_correction=800;
+        			right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
+        			left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+        			chThdSleepMilliseconds(600);
+        			chprintf((BaseSequentialStream *)&SD3, "front");
 
-        if (!obstacle_detected())
-        {
-        	speed=900;
-        	speed_correction =0;
-        chprintf((BaseSequentialStream *)&SD3, "nothing_detected");
-       }
+        			break;
+
+        		//case REACHED_RIGHT :
+        		//	speed=0;
+        		//	speed_correction=200;
+        		//	chprintf((BaseSequentialStream *)&SD3, "right45");
+
+        		//case REACHED_LEFT :
+        	//		speed=0;
+        		//	speed_correction=-200;
+        	}
+    }
+        if (!obstacle_detected()){
+
+                	speed=900;
+                	speed_correction=0;
+                	right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
+                	left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+                	chprintf((BaseSequentialStream *)&SD3, "nothing");
+
+                }
+
+  
        
 
         //computes the speed to give to the motors
@@ -85,8 +104,9 @@ static THD_FUNCTION(PiRegulator, arg) {
       //  }
 
         //applies the speed from the PI regulator and the correction for the rotation
-		right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
-		left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+		
+		//right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
+		//left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
 
         //100Hz
         chThdSleepUntilWindowed(time, time + MS2ST(10));

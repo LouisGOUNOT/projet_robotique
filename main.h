@@ -26,7 +26,11 @@ extern "C" {
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 
 #define NUMSENSOR				8
-#define REACHED_FRONT			1
+#define REACHED_FRONT 			1
+#define REACHED_FRONT45			2
+#define REACHED_LEFT			3
+#define REACHED_RIGHT 			4
+
 #define DIST_OBS_MAX			2 // [cm]
 
 //numero des différents capteur de proximité

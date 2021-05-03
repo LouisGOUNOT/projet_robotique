@@ -30,27 +30,18 @@ static uint8_t obstacle_detection(void){
     	}
 
 
-    	else if  (distance_capteurs[FRONT_RIGHT45]<DIST_OBS_MAX)
-    		 return REACHED_RIGHT45;
+    	//else if  (distance_capteurs[FRONT_RIGHT45]<DIST_OBS_MAX)
+    	//	 return REACHED_RIGHT;
 
     	
 
-    	else if (distance_capteurs[LEFT_RIGHT45]<DIST_OBS_MAX)
-    		return REACH_LEFT45;
+    	//else if (distance_capteurs[LEFT_RIGHT45]<DIST_OBS_MAX)
+    	//	return REACH_LEFT;
 
     	else return 0;
-    		//chprintf((BaseSequentialStream *)&SD3, "distance_capteurs devant droit%d\n et capteurs devant gauche %d\n", distance_capteurs[0],distance_capteurs[7]);
-    		//return REACHED_FRONT;
-    	//else return 0;
     
-		//	
-    //f//or (int i=5;i<8;i++){
-    //	if (distance_capteurs[i]<DIST_OBS_MAX)
-    //		return REACHED_LEFT;
-    	
 
-   // }   
-     	
+       
 }
 
 static THD_WORKING_AREA(waObstacle, 256);
