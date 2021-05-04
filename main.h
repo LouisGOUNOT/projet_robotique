@@ -16,7 +16,7 @@ extern "C" {
 #define MIN_LINE_WIDTH			40
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			2 
-#define PXTOCM					600.0f //experimental value
+#define PXTOCM					1000.0f //experimental value
 #define GOAL_DISTANCE 			4.0f
 #define MAX_DISTANCE 			10.0f
 #define ERROR_THRESHOLD			0.1f	//[cm] because of the noise of the camera
