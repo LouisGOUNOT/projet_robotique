@@ -28,6 +28,9 @@ static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 static uint8_t target_color= 0; //Target color, 0 = red, 1 = green, 2 = blue // 2 par defaut pour tests
 static uint16_t temp_begin = 0;
 static uint16_t temp_end = 0;
+static uint16_t blueMean = 0;
+static uint16_t redMean = 0;
+static float meanRatio = 0;
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -138,7 +141,8 @@ uint16_t extract_line_mean(uint8_t *buffer){
 		{
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image
-		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < MEAN_CORRECTION*mean)
+//		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < MEAN_CORRECTION*mean)
+			if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < MEAN_CORRECTION*mean)
 		    {
 		        begin = i;
 		        stop = 1;
@@ -194,11 +198,12 @@ uint16_t extract_line_mean(uint8_t *buffer){
 	}
 	temp_end = end;
 	temp_begin = begin;
-	float finalMean = mean/(end-begin);
+//	float finalMean = mean/(end-begin);
 	chprintf((BaseSequentialStream *)&SD3, "begin= %d\n", begin);
 	chprintf((BaseSequentialStream *)&SD3, "end= %d\n", end);
-	chprintf((BaseSequentialStream *)&SD3, "mean= %d\n", finalMean);
-	return finalMean;
+	chprintf((BaseSequentialStream *)&SD3, "finalMean= %d\n", mean);
+//	return finalMean;
+	return mean;
 }
 
 static THD_WORKING_AREA(waCaptureImage, 256);
@@ -269,8 +274,10 @@ static THD_FUNCTION(ProcessImage, arg) {
 					//invert the bool
 					send_to_computer = !send_to_computer;
 				}
-				float redMean = extract_line_mean(image);
+				redMean = extract_line_mean(image);
+				chprintf((BaseSequentialStream *)&SD3, "redMean= %d\n", redMean);
 
+				img_buff_ptr = dcmi_get_last_image_ptr();
 				// detecte pixels rouges et verts pour trouver bleu
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
 					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
@@ -278,7 +285,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
 					image[i/2] = red_temp + green_temp;
 				}
-				float blueMean = extract_line_mean(image);
+				blueMean = extract_line_mean(image);
+				chprintf((BaseSequentialStream *)&SD3, "blueMean= %d\n", blueMean);
 
 				if (target_color == 2){
 					if(send_to_computer){
@@ -288,34 +296,38 @@ static THD_FUNCTION(ProcessImage, arg) {
 					//invert the bool
 					send_to_computer = !send_to_computer;
 				}
-				float meanRatio = blueMean/redMean;
+
 				//search for a line in the image and gets its width in pixels
 //				lineWidth = extract_line_width(image);
 				lineWidth = temp_end - temp_begin;
 
+				meanRatio = blueMean/redMean;
 
-				chprintf((BaseSequentialStream *)&SD3, "blueMean= %f\n", blueMean);
-				chprintf((BaseSequentialStream *)&SD3, "redMean= %f\n", redMean);
+
+//				chprintf((BaseSequentialStream *)&SD3, "blueMean= %d\n", blueMean);
+//				chprintf((BaseSequentialStream *)&SD3, "redMean= %d\n", redMean);
 				chprintf((BaseSequentialStream *)&SD3, "meanRatio= %f\n", meanRatio);
 
 //				//search for a line in the image and gets its width in pixels
 //				lineWidth = extract_line_width(image);
+				chprintf((BaseSequentialStream *)&SD3, "temp_begin= %d\n", temp_begin);
+				chprintf((BaseSequentialStream *)&SD3, "temp_end= %d\n", temp_end);
 				chprintf((BaseSequentialStream *)&SD3, "lineWidth= %d\n", lineWidth);
 				if((blueMean + redMean) > 1){
 					// entre 1 et 5 bleu
-					if((meanRatio < 5)&&(meanRatio > 0.5))
+					if((meanRatio < 5.5)&&(meanRatio > 0.5))
 					{
 						set_rgb_led(LED4,0,0,255);
 						set_rgb_led(LED6,0,0,255);
 						set_rgb_led(LED8,0,0,255);
 					}
-					// entre 5-5 et 15 rouge
-				}
-				else if(((blueMean == 0) || (redMean == 0))&& (lineWidth > 70))
-				{
-					set_rgb_led(LED4,255,0,0);
-					set_rgb_led(LED6,255,0,0);
-					set_rgb_led(LED8,255,0,0);
+					// entre 5-5 et 25 rouge
+					else if((meanRatio < 25)&&(meanRatio > 5.5))
+					{
+						set_rgb_led(LED4,255,0,0);
+						set_rgb_led(LED6,255,0,0);
+						set_rgb_led(LED8,255,0,0);
+					}
 				}
 				else{
 					set_rgb_led(LED4,0,0,0);
