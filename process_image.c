@@ -26,6 +26,8 @@
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 static uint8_t target_color= 0; //Target color, 0 = red, 1 = green, 2 = blue // 2 par defaut pour tests
+static uint16_t temp_begin = 0;
+static uint16_t temp_end = 0;
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -100,9 +102,9 @@ uint16_t extract_line_width(uint8_t *buffer){
 	if(line_not_found){
 		begin = 0;
 		end = 0;
-		width = last_width;
+		width = 0;
 	}else{
-		last_width = width = (end - begin);
+		width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
 	}
 	chprintf((BaseSequentialStream *)&SD3, "width= %f\n", width);
@@ -190,11 +192,13 @@ uint16_t extract_line_mean(uint8_t *buffer){
 	for(uint16_t i = begin ; i < end ; i++){
 		mean += buffer[i];
 	}
-	mean = mean/(end-begin);
+	temp_end = end;
+	temp_begin = begin;
+	float finalMean = mean/(end-begin);
 	chprintf((BaseSequentialStream *)&SD3, "begin= %d\n", begin);
 	chprintf((BaseSequentialStream *)&SD3, "end= %d\n", end);
-	chprintf((BaseSequentialStream *)&SD3, "mean= %d\n", mean);
-	return mean;
+	chprintf((BaseSequentialStream *)&SD3, "mean= %d\n", finalMean);
+	return finalMean;
 }
 
 static THD_WORKING_AREA(waCaptureImage, 256);
@@ -232,55 +236,17 @@ static THD_FUNCTION(ProcessImage, arg) {
 	uint8_t red_temp;
 	uint8_t green_temp;
 	uint8_t blue_temp;
-	uint32_t redMean = 0;
-	uint32_t greenMean = 0;
-	uint32_t blueMean = 0;
+//	uint32_t redMean = 0;
+//	uint32_t greenMean = 0;
+//	uint32_t blueMean = 0;
 	uint8_t suspected_color = 0;
-	uint8_t meanRatio = 0;
+//	uint8_t meanRatio = 0;
 
 	bool send_to_computer = true;
 
     while(1){
     	//waits until an image has been captured
         chBSemWait(&image_ready_sem);
-
-//			switch (target_color){
-//
-//			case 0:
-//				// detecte pixels verts et bleus pour trouver rouge
-//				img_buff_ptr = dcmi_get_last_image_ptr();
-//
-//				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
-//					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
-//					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
-//					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
-//					blue_temp = (img_buff_ptr[i] & MSK_BLUE2);
-//					image[i/2] = green_temp + blue_temp;
-//				}
-//			  break;
-//
-//			case 1:
-//				// detecte pixels rouges et bleus pour trouver vert
-//				img_buff_ptr = dcmi_get_last_image_ptr();
-//				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
-//					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
-//					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
-//					blue_temp = (img_buff_ptr[++i] & MSK_BLUE2);
-//					image[i/2] = red_temp + blue_temp;
-//				}
-//			  break;
-//
-//			case 2:
-//				// detecte pixels rouges et verts pour trouver bleu
-//				img_buff_ptr = dcmi_get_last_image_ptr();
-//				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
-//					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
-//					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
-//					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
-//					image[i/2] = red_temp + green_temp;
-//				}
-//			  break;
-//		}
 
 
 				// detecte pixels verts et bleus pour trouver rouge
@@ -303,27 +269,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 					//invert the bool
 					send_to_computer = !send_to_computer;
 				}
-				redMean = extract_line_mean(image);
+				float redMean = extract_line_mean(image);
 
-
-//				// detecte pixels rouges et bleus pour trouver vert
-//				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
-//					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
-//					blue_temp = (img_buff_ptr[++i] & MSK_BLUE2);
-//					image[i/2] = red_temp + blue_temp;
-//				}
-//				greenMean = extract_line_mean(image);
-//				if (greenMean < redMean){
-//					suspected_color = 1;
-//				}
-//				if (target_color == 1){
-//					if(send_to_computer){
-//						//sends to the computer the image
-//						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
-//					}
-//					//invert the bool
-//					send_to_computer = !send_to_computer;
-//				}
 				// detecte pixels rouges et verts pour trouver bleu
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
 					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
@@ -331,7 +278,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
 					image[i/2] = red_temp + green_temp;
 				}
-				blueMean = extract_line_mean(image);
+				float blueMean = extract_line_mean(image);
 
 				if (target_color == 2){
 					if(send_to_computer){
@@ -342,26 +289,33 @@ static THD_FUNCTION(ProcessImage, arg) {
 					send_to_computer = !send_to_computer;
 				}
 				float meanRatio = blueMean/redMean;
-				chprintf((BaseSequentialStream *)&SD3, "blueMean= %d\n", blueMean);
-				chprintf((BaseSequentialStream *)&SD3, "redMean= %d\n", redMean);
-				chprintf((BaseSequentialStream *)&SD3, "meanRatio= %d\n", meanRatio);
-
 				//search for a line in the image and gets its width in pixels
-				lineWidth = extract_line_width(image);
+//				lineWidth = extract_line_width(image);
+				lineWidth = temp_end - temp_begin;
+
+
+				chprintf((BaseSequentialStream *)&SD3, "blueMean= %f\n", blueMean);
+				chprintf((BaseSequentialStream *)&SD3, "redMean= %f\n", redMean);
+				chprintf((BaseSequentialStream *)&SD3, "meanRatio= %f\n", meanRatio);
+
+//				//search for a line in the image and gets its width in pixels
+//				lineWidth = extract_line_width(image);
 				chprintf((BaseSequentialStream *)&SD3, "lineWidth= %d\n", lineWidth);
 				if((blueMean + redMean) > 1){
-					if((meanRatio < 1.5)&&(meanRatio > 0.5))
+					// entre 1 et 5 bleu
+					if((meanRatio < 5)&&(meanRatio > 0.5))
 					{
 						set_rgb_led(LED4,0,0,255);
 						set_rgb_led(LED6,0,0,255);
 						set_rgb_led(LED8,0,0,255);
 					}
-					else
-					{
-						set_rgb_led(LED4,255,0,0);
-						set_rgb_led(LED6,255,0,0);
-						set_rgb_led(LED8,255,0,0);
-					}
+					// entre 5-5 et 15 rouge
+				}
+				else if(((blueMean == 0) || (redMean == 0))&& (lineWidth > 70))
+				{
+					set_rgb_led(LED4,255,0,0);
+					set_rgb_led(LED6,255,0,0);
+					set_rgb_led(LED8,255,0,0);
 				}
 				else{
 					set_rgb_led(LED4,0,0,0);
@@ -370,18 +324,10 @@ static THD_FUNCTION(ProcessImage, arg) {
 				}
 
 
-
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth){
 			distance_cm = PXTOCM/lineWidth;
 		}
-
-//		if(send_to_computer){
-//			//sends to the computer the image
-//			SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
-//		}
-//		//invert the bool
-//		send_to_computer = !send_to_computer;
     }
 }
 
