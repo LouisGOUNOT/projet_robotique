@@ -5,6 +5,7 @@
 
 #include <main.h>
 #include <camera/po8030.h>
+#include <motors.h>
 
 #include <process_image.h>
 #include <audio_processing.h>
@@ -31,6 +32,9 @@ static uint16_t temp_end = 0;
 static uint16_t blueMean = 0;
 static uint16_t redMean = 0;
 static float meanRatio = 0;
+static uint8_t i_red = 0;
+static uint8_t i_blue = 0;
+
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -313,29 +317,70 @@ static THD_FUNCTION(ProcessImage, arg) {
 				chprintf((BaseSequentialStream *)&SD3, "temp_begin= %d\n", temp_begin);
 				chprintf((BaseSequentialStream *)&SD3, "temp_end= %d\n", temp_end);
 				chprintf((BaseSequentialStream *)&SD3, "lineWidth= %d\n", lineWidth);
+
+				// CONDITIONS QUI PERMETTENT DE TROUVER COULEURS SANS ACTIONS SUPPLEMENTAIRES
+//				if((blueMean + redMean) > 1){
+//					// entre 1 et 5 bleu
+//					if((meanRatio < 5.5)&&(meanRatio > 0.5))
+//					{
+//						set_rgb_led(LED4,0,0,255);
+//						set_rgb_led(LED6,0,0,255);
+//						set_rgb_led(LED8,0,0,255);
+//					}
+//					// entre 5-5 et 25 rouge
+//					else if((meanRatio < 25)&&(meanRatio > 5.5))
+//					{
+//						set_rgb_led(LED4,255,0,0);
+//						set_rgb_led(LED6,255,0,0);
+//						set_rgb_led(LED8,255,0,0);
+//					}
+//				}
+//				else{
+//					set_rgb_led(LED4,0,0,0);
+//					set_rgb_led(LED6,0,0,0);
+//					set_rgb_led(LED8,0,0,0);
+//				}
+				// CONDITIONS AVEC ACTIONS SUR LE MOTEUR
+
 				if((blueMean + redMean) > 1){
-					// entre 1 et 5 bleu
+					// ratio entre 1 et 5 bleu
+					// si trouve bleu quand c'est demandé alors arrete de tourner et éteint la led et moteur
+					// si pas demandé alors reset le compteur de rouge pour éviter les faux positifs
+//					if((meanRatio < 5.5)&&(meanRatio > 0.5)&&(target_color == 2))
 					if((meanRatio < 5.5)&&(meanRatio > 0.5))
 					{
-						set_rgb_led(LED4,0,0,255);
-						set_rgb_led(LED6,0,0,255);
-						set_rgb_led(LED8,0,0,255);
+						if (target_color == 0){
+							i_red = 0;
+						}
+						else{
+							i_blue++;
+							if (i_blue == 5){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
+								set_rgb_led(LED2,0,0,0);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								i_blue = 0;
+							}
+						}
 					}
-					// entre 5-5 et 25 rouge
+					// ratio entre 5-5 et 25 rouge
+					// si trouve rouge quand c'est demandé alors arrete de tourner et éteint la led et moteurs
+//					else if((meanRatio < 25)&&(meanRatio > 5.5)&&(target_color == 0))
 					else if((meanRatio < 25)&&(meanRatio > 5.5))
 					{
-						set_rgb_led(LED4,255,0,0);
-						set_rgb_led(LED6,255,0,0);
-						set_rgb_led(LED8,255,0,0);
+						if (target_color == 2){
+							i_blue = 0;
+						}
+						else{
+							i_red++;
+							if (i_red == 5){
+								set_rgb_led(LED2,0,0,0);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								i_red = 0;
+							}
+						}
 					}
 				}
-				else{
-					set_rgb_led(LED4,0,0,0);
-					set_rgb_led(LED6,0,0,0);
-					set_rgb_led(LED8,0,0,0);
-				}
-
-
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth){
 			distance_cm = PXTOCM/lineWidth;
@@ -359,9 +404,11 @@ void process_image_start(void){
 
 void select_target_color(uint8_t color_id) {
 	switch (color_id){
-
+//choisit le rouge et tourne pour le trouver
 			case 0:
 				target_color = 0;
+				right_motor_set_speed(-100);
+				left_motor_set_speed(100);
 
 			  break;
 
@@ -369,9 +416,11 @@ void select_target_color(uint8_t color_id) {
 				target_color = 1;
 
 			  break;
-
+//choisit le bleu et tourne pour le trouver
 			case 2:
 				target_color = 2;
+				right_motor_set_speed(-100);
+				left_motor_set_speed(100);
 			  break;
 		}
 }

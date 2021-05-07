@@ -103,9 +103,10 @@ int main(void)
 //	pi commenté pour tester la detection de couleur uniquement
 //	pi_regulator_start();
 	process_image_start();
-	set_rgb_led(LED4,255,0,0);
-	set_rgb_led(LED6,0,255,0);
-	set_rgb_led(LED8,0,0,255);
+//	leds misent en couleurs au debut du projet mais sert plus a rien
+//	set_rgb_led(LED4,255,0,0);
+//	set_rgb_led(LED6,0,255,0);
+//	set_rgb_led(LED8,0,0,255);
     //temp tab used to store values in complex_float format
     //needed bx doFFT_c
     static complex_float temp_tab[FFT_SIZE];
