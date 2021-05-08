@@ -9,6 +9,7 @@
 #include <motors.h>
 #include <pi_regulator.h>
 #include <process_image.h>
+#include <obstacle.h>
 
 //simple PI regulator implementation
 int16_t pi_regulator(float distance, float goal){
@@ -53,26 +54,50 @@ static THD_FUNCTION(PiRegulator, arg) {
     int16_t speed_correction = 0;
 
     while(1){
-        time = chVTGetSystemTime();
+    	time = chVTGetSystemTime();
+    	if(get_distance_cm()){
 
-        //computes the speed to give to the motors
-        //distance_cm is modified by the image processing thread
-        speed = pi_regulator(get_distance_cm(), GOAL_DISTANCE);
-        //computes a correction factor to let the robot rotate to be in front of the line
-        speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2));
 
-        //if the line is nearly in front of the camera, don't rotate
-        if(abs(speed_correction) < ROTATION_THRESHOLD){
-        	speed_correction = 0;
-        }
+    		chprintf((BaseSequentialStream *)&SD3, "jesuisdangetlineposition");
 
-        //applies the speed from the PI regulator and the correction for the rotation
-		right_motor_set_speed(0.5*speed - ROTATION_COEFF * speed_correction);
-		left_motor_set_speed(0.5*speed + ROTATION_COEFF * speed_correction);
+    		//computes the speed to give to the motors
+    		//distance_cm is modified by the image processing thread
+    		speed = pi_regulator(get_distance_cm(), GOAL_DISTANCE);
+    		//computes a correction factor to let the robot rotate to be in front of the line
+    		speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2));
 
-        //100Hz
-        chThdSleepUntilWindowed(time, time + MS2ST(10));
+    		//if the line is nearly in front of the camera, don't rotate
+    		if(abs(speed_correction) < ROTATION_THRESHOLD){
+    			speed_correction = 0;
+    		}
+
+    		//applies the speed from the PI regulator and the correction for the rotation
+    		//right_motor_set_speed(SPEED_COEFF*speed - ROTATION_COEFF * speed_correction);
+    		//left_motor_set_speed(SPEED_COEFF*speed + ROTATION_COEFF * speed_correction);
+    	}
+
+
+
+
+    	if((!get_distance_cm()) && obstacle_detected()){
+    		chprintf((BaseSequentialStream *)&SD3, "pas de ligne et obstacle");
+
+           // right_motor_set_speed(-500);
+           // left_motor_set_speed(500);
+            chThdSleepMilliseconds(600);
+
+    	}
+    	//si pas de ligne et pas d'obstacle le robot ne bouge pas;
+    	else if((!get_distance_cm()) && (!obstacle_detected())){
+            chprintf((BaseSequentialStream *)&SD3, "non obstacle et ligne");
+    		//right_motor_set_speed(0);
+    		//left_motor_set_speed(0);
+    	}
+    	//100Hz
+    	chThdSleepUntilWindowed(time, time + MS2ST(10));
+
     }
+
 }
 
 void pi_regulator_start(void){

@@ -19,25 +19,15 @@ static uint8_t obstacle_detection(void){
 	for (uint8_t i=0; i<NUMSENSOR;i++){
     	proxi[i]=get_prox(i);
     	distance_capteurs[i]=530/pow(proxi[i],0.98);
-    	//chprintf((BaseSequentialStream *)&SD3, "distance_capteurs devant droit%d\n", distance_capteurs[7]);
+//    	chprintf((BaseSequentialStream *)&SD3, "distance_capteurs devant droit%d\n", distance_capteurs[7]);
     }
 
 
    	//capteurs trop proches d'un objet
-    	if ((distance_capteurs[FRONT_RIGHT]<DIST_OBS_MAX)||(distance_capteurs[FRONT_LEFT]<DIST_OBS_MAX)){
-    	    //chprintf((BaseSequentialStream *)&SD3, "distance_capteurs devant droit%d\n et capteurs devant gauche %d\n", distance_capteurs[0],distance_capteurs[7]);
+    	if((distance_capteurs[FRONT_RIGHT]<DIST_OBS_MAX)||(distance_capteurs[FRONT_LEFT]<DIST_OBS_MAX)){
+    	    chprintf((BaseSequentialStream *)&SD3, "distance_capteurs devant droit%d\n et capteurs devant gauche %d\n", distance_capteurs[0],distance_capteurs[7]);
 			return REACHED_FRONT;
     	}
-
-
-    	//else if  (distance_capteurs[FRONT_RIGHT45]<DIST_OBS_MAX)
-    	//	 return REACHED_RIGHT;
-
-    	
-
-    	//else if (distance_capteurs[LEFT_RIGHT45]<DIST_OBS_MAX)
-    	//	return REACH_LEFT;
-
     	else return 0;
     
 

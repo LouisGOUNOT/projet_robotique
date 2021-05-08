@@ -9,7 +9,7 @@
 #include <process_image.h>
 
 
-static float distance_cm = 0;
+static uint16_t distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 
 //semaphore
@@ -89,16 +89,13 @@ uint16_t extract_line_width(uint8_t *buffer){
 	}else{
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
+
 		chprintf((BaseSequentialStream *)&SD3, "width= %d\n", width);
 	}
 
 	//sets a maximum width or returns the measured width
-	if((PXTOCM/width) > MAX_DISTANCE){
-		return PXTOCM/MAX_DISTANCE;
-	}else{
 		return width;
 
-	}
 
 
 }
@@ -153,11 +150,16 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
-
+		chprintf((BaseSequentialStream *)&SD3, "lineWidth = %d\n", lineWidth);
 		//converts the width into a distance between the robot and the camera
-		if(lineWidth){
+		if(lineWidth>80){
 			distance_cm = PXTOCM/lineWidth;
 			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
+		}
+		else {
+			distance_cm=0;
+			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
+
 		}
 
 		if(send_to_computer){
@@ -169,7 +171,7 @@ static THD_FUNCTION(ProcessImage, arg) {
     }
 }
 
-float get_distance_cm(void){
+uint16_t get_distance_cm(void){
 	return distance_cm;
 }
 
