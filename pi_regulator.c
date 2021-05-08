@@ -42,7 +42,7 @@ int16_t pi_regulator(float distance, float goal){
     return (int16_t)speed;
 }
 
-static THD_WORKING_AREA(waPiRegulator, 256);
+static THD_WORKING_AREA(waPiRegulator, 1024); //mémoire augmentée à cause de panic
 static THD_FUNCTION(PiRegulator, arg) {
 
     chRegSetThreadName(__FUNCTION__);
@@ -55,7 +55,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 
     while(1){
     	time = chVTGetSystemTime();
-    	if(get_distance_cm()){
+    	if(get_distance_cm() ){
 
 
     		chprintf((BaseSequentialStream *)&SD3, "jesuisdangetlineposition");
@@ -72,8 +72,8 @@ static THD_FUNCTION(PiRegulator, arg) {
     		}
 
     		//applies the speed from the PI regulator and the correction for the rotation
-    		//right_motor_set_speed(SPEED_COEFF*speed - ROTATION_COEFF * speed_correction);
-    		//left_motor_set_speed(SPEED_COEFF*speed + ROTATION_COEFF * speed_correction);
+    		right_motor_set_speed(0.4*speed - ROTATION_COEFF * speed_correction);
+    		left_motor_set_speed(0.4*speed + ROTATION_COEFF * speed_correction);
     	}
 
 
@@ -82,16 +82,16 @@ static THD_FUNCTION(PiRegulator, arg) {
     	if((!get_distance_cm()) && obstacle_detected()){
     		chprintf((BaseSequentialStream *)&SD3, "pas de ligne et obstacle");
 
-           // right_motor_set_speed(-500);
-           // left_motor_set_speed(500);
-            chThdSleepMilliseconds(600);
+           right_motor_set_speed(-800);
+           left_motor_set_speed(800);
+            chThdSleepMilliseconds(820);
 
     	}
     	//si pas de ligne et pas d'obstacle le robot ne bouge pas;
     	else if((!get_distance_cm()) && (!obstacle_detected())){
             chprintf((BaseSequentialStream *)&SD3, "non obstacle et ligne");
-    		//right_motor_set_speed(0);
-    		//left_motor_set_speed(0);
+    		right_motor_set_speed(0);
+    		left_motor_set_speed(0);
     	}
     	//100Hz
     	chThdSleepUntilWindowed(time, time + MS2ST(10));

@@ -85,7 +85,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 	if(line_not_found){
 		begin = 0;
 		end = 0;
-		width = last_width;
+		width = 0;
 	}else{
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
@@ -152,7 +152,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		lineWidth = extract_line_width(image);
 		chprintf((BaseSequentialStream *)&SD3, "lineWidth = %d\n", lineWidth);
 		//converts the width into a distance between the robot and the camera
-		if(lineWidth>80){
+		if(lineWidth>150){
 			distance_cm = PXTOCM/lineWidth;
 			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
 		}
