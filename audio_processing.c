@@ -77,6 +77,7 @@ void sound_remote(float* data){
 	//Target blue
 	else if(max_norm_index >= FREQ_BLUE_L && max_norm_index <= FREQ_BLUE_H){
 		select_target_color(2);
+		set_rgb_led(LED2,0,0,255);
 		po8030_set_rgb_gain(0x50, 0x50,0x00);
 	}
 }
