@@ -26,7 +26,7 @@
 
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
-static uint8_t target_color= 0; //Target color, 0 = red, 1 = green, 2 = blue // 2 par defaut pour tests
+static uint8_t target_color= 0; //Target color, 0 = red, 1 = green, 2 = blue // 1 par defaut pour tests
 static uint16_t temp_begin = 0;
 static uint16_t temp_end = 0;
 static uint16_t blueMean = 0;
@@ -144,8 +144,7 @@ uint16_t extract_line_mean(uint8_t *buffer){
 		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
 		{
 			//the slope must at least be WIDTH_SLOPE wide and is compared
-		    //to the mean of the image
-//		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < MEAN_CORRECTION*mean)
+		    //to the mean of the image with an experimental factor: MEAN_CORRECTION
 			if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < MEAN_CORRECTION*mean)
 		    {
 		        begin = i;
@@ -203,9 +202,9 @@ uint16_t extract_line_mean(uint8_t *buffer){
 	temp_end = end;
 	temp_begin = begin;
 //	float finalMean = mean/(end-begin);
-	chprintf((BaseSequentialStream *)&SD3, "begin= %d\n", begin);
-	chprintf((BaseSequentialStream *)&SD3, "end= %d\n", end);
-	chprintf((BaseSequentialStream *)&SD3, "finalMean= %d\n", mean);
+//	chprintf((BaseSequentialStream *)&SD3, "begin= %d\n", begin);
+//	chprintf((BaseSequentialStream *)&SD3, "end= %d\n", end);
+//	chprintf((BaseSequentialStream *)&SD3, "finalMean= %d\n", mean);
 //	return finalMean;
 	return mean;
 }
@@ -245,11 +244,6 @@ static THD_FUNCTION(ProcessImage, arg) {
 	uint8_t red_temp;
 	uint8_t green_temp;
 	uint8_t blue_temp;
-//	uint32_t redMean = 0;
-//	uint32_t greenMean = 0;
-//	uint32_t blueMean = 0;
-	uint8_t suspected_color = 0;
-//	uint8_t meanRatio = 0;
 
 	bool send_to_computer = true;
 
@@ -262,26 +256,20 @@ static THD_FUNCTION(ProcessImage, arg) {
 				img_buff_ptr = dcmi_get_last_image_ptr();
 
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
-//					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
 					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
 					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
 
 					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
 					blue_temp = (img_buff_ptr[i] & MSK_BLUE2);
+
 					image[i/2] = green_temp + blue_temp;
 				}
-				if (target_color == 0){
-					if(send_to_computer){
-						//sends to the computer the image
-						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
-					}
-					//invert the bool
-					send_to_computer = !send_to_computer;
-				}
+
 				redMean = extract_line_mean(image);
-				chprintf((BaseSequentialStream *)&SD3, "redMean= %d\n", redMean);
+
 
 				img_buff_ptr = dcmi_get_last_image_ptr();
+
 				// detecte pixels rouges et verts pour trouver bleu
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
 					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
@@ -290,56 +278,14 @@ static THD_FUNCTION(ProcessImage, arg) {
 					image[i/2] = red_temp + green_temp;
 				}
 				blueMean = extract_line_mean(image);
-				chprintf((BaseSequentialStream *)&SD3, "blueMean= %d\n", blueMean);
 
-				if (target_color == 2){
-					if(send_to_computer){
-						//sends to the computer the image
-						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
-					}
-					//invert the bool
-					send_to_computer = !send_to_computer;
-				}
 
-				//search for a line in the image and gets its width in pixels
-//				lineWidth = extract_line_width(image);
+				//gets lineWidth in pixels
 				lineWidth = temp_end - temp_begin;
 
 				meanRatio = blueMean/redMean;
 
 
-//				chprintf((BaseSequentialStream *)&SD3, "blueMean= %d\n", blueMean);
-//				chprintf((BaseSequentialStream *)&SD3, "redMean= %d\n", redMean);
-				chprintf((BaseSequentialStream *)&SD3, "meanRatio= %f\n", meanRatio);
-
-//				//search for a line in the image and gets its width in pixels
-//				lineWidth = extract_line_width(image);
-				chprintf((BaseSequentialStream *)&SD3, "temp_begin= %d\n", temp_begin);
-				chprintf((BaseSequentialStream *)&SD3, "temp_end= %d\n", temp_end);
-				chprintf((BaseSequentialStream *)&SD3, "lineWidth= %d\n", lineWidth);
-
-				// CONDITIONS QUI PERMETTENT DE TROUVER COULEURS SANS ACTIONS SUPPLEMENTAIRES
-//				if((blueMean + redMean) > 1){
-//					// entre 1 et 5 bleu
-//					if((meanRatio < 5.5)&&(meanRatio > 0.5))
-//					{
-//						set_rgb_led(LED4,0,0,255);
-//						set_rgb_led(LED6,0,0,255);
-//						set_rgb_led(LED8,0,0,255);
-//					}
-//					// entre 5-5 et 25 rouge
-//					else if((meanRatio < 25)&&(meanRatio > 5.5))
-//					{
-//						set_rgb_led(LED4,255,0,0);
-//						set_rgb_led(LED6,255,0,0);
-//						set_rgb_led(LED8,255,0,0);
-//					}
-//				}
-//				else{
-//					set_rgb_led(LED4,0,0,0);
-//					set_rgb_led(LED6,0,0,0);
-//					set_rgb_led(LED8,0,0,0);
-//				}
 				// CONDITIONS AVEC ACTIONS SUR LE MOTEUR
 
 				if((blueMean + redMean) > 1){
@@ -404,7 +350,7 @@ void process_image_start(void){
 
 void select_target_color(uint8_t color_id) {
 	switch (color_id){
-//choisit le rouge et tourne pour le trouver
+			//choisit le rouge et tourne pour le trouver
 			case 0:
 				target_color = 0;
 				right_motor_set_speed(-100);
@@ -416,7 +362,7 @@ void select_target_color(uint8_t color_id) {
 				target_color = 1;
 
 			  break;
-//choisit le bleu et tourne pour le trouver
+			 //choisit le bleu et tourne pour le trouver
 			case 2:
 				target_color = 2;
 				right_motor_set_speed(-100);
