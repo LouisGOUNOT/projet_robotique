@@ -12,7 +12,7 @@ extern "C" {
 
 //constants for the differents parts of the project
 #define IMAGE_BUFFER_SIZE		640
-#define WIDTH_SLOPE				5 // 20 avant chez louis peut ne pas marcher
+#define WIDTH_SLOPE				20 // 20 avant chez louis peut ne pas marcher
 #define MIN_LINE_WIDTH			60// 40 avant chez clement peut ne pas marcher
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			2 

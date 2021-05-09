@@ -29,13 +29,13 @@ static float micRight_output[FFT_SIZE];
 static float micFront_output[FFT_SIZE];
 static float micBack_output[FFT_SIZE];
 
-#define MIN_VALUE_THRESHOLD	10000 
+#define MIN_VALUE_THRESHOLD	20000
 
-#define MIN_FREQ		10	//we don't analyze before this index to not use resources for nothing
-#define FREQ_RED	    16	//250Hz
-#define FREQ_GREEN		19	//296Hz
-#define FREQ_BLUE		23	//359HZ
-#define MAX_FREQ		30	//we don't analyze after this index to not use resources for nothing
+#define MIN_FREQ		50	//we don't analyze before this index to not use resources for nothing
+#define FREQ_RED	    51	//800Hz
+#define FREQ_GREEN		54	//850
+#define FREQ_BLUE		57	//900Hz
+#define MAX_FREQ		58	//we don't analyze after this index to not use resources for nothing
 
 #define FREQ_RED_L		(FREQ_RED-1)
 #define FREQ_RED_H		(FREQ_RED+1)
@@ -62,8 +62,8 @@ void sound_remote(float* data){
 
 	//Target red
 	if(max_norm_index >= FREQ_RED_L && max_norm_index <= FREQ_RED_H){
-//		select_target_color(0);
-//		set_rgb_led(LED2,255,0,0);
+		select_target_color(0);
+		set_rgb_led(LED2,255,0,0);
 	}
 	//Target black line
 	else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
@@ -72,9 +72,9 @@ void sound_remote(float* data){
 	}
 	//Target blue
 	else if(max_norm_index >= FREQ_BLUE_L && max_norm_index <= FREQ_BLUE_H){
-//		select_target_color(2);
-//		set_rgb_led(LED2,0,0,255);
-//		po8030_set_rgb_gain(0x50, 0x50,0x00);
+		select_target_color(2);
+		set_rgb_led(LED2,0,0,255);
+		po8030_set_rgb_gain(0x50, 0x50,0x00);
 	}
 }
 

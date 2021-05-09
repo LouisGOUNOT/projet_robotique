@@ -77,8 +77,10 @@ static THD_FUNCTION(PiRegulator, arg) {
 				}
 
 				//applies the speed from the PI regulator and the correction for the rotation
-				right_motor_set_speed(0.4*speed - ROTATION_COEFF * speed_correction);
-				left_motor_set_speed(0.4*speed + ROTATION_COEFF * speed_correction);
+//				right_motor_set_speed(0.4*speed - ROTATION_COEFF * speed_correction);
+//				left_motor_set_speed(0.4*speed + ROTATION_COEFF * speed_correction);
+				right_motor_set_speed(0.2*speed - ROTATION_COEFF * speed_correction);
+				left_motor_set_speed(0.2*speed + ROTATION_COEFF * speed_correction);
 			}
 
 

@@ -10,8 +10,8 @@
 static uint8_t reached_distance=0;
 
 static uint8_t obstacle_detection(void){
-	static uint16_t proxi[NUMSENSOR]={0,0,0,0,0,0,0,0};
-	static uint8_t distance_capteurs[NUMSENSOR]={0,0,0,0,0,0,0,0};
+	static uint16_t proxi[NUMSENSOR]={0};
+	static uint8_t distance_capteurs[NUMSENSOR]={0};
 
 
 
