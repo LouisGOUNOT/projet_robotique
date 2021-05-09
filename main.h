@@ -48,6 +48,9 @@ extern "C" {
 #define VIT_ROT					800
 #define TEMPS_DEMITOUR			600 // [Milliseconds]
 
+//Camera
+#define MEAN_CORRECTION  		1.0f //experimental value
+
 /** Robot wide IPC bus. */
 extern messagebus_t bus;
 
