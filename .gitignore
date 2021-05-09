@@ -1,5 +1,9 @@
+/build
 # Prerequisites
 *.d
+
+/build
+.DS_Store
 
 # Object files
 *.o
