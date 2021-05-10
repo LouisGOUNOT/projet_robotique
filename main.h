@@ -17,8 +17,9 @@ extern "C" {
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			2 
 #define SPEED_COEFF				0.50f
-#define PXTOCM					1200.0f //experimental value
-#define GOAL_DISTANCE 			4.0f
+#define PXTOCM_BLACK_LINE		1200.0f //experimental value
+#define PXTOCM_COLOR			1400.0f //experimental value
+#define GOAL_DISTANCE 			2.0f
 #define MAX_DISTANCE 			30.0f
 #define ERROR_THRESHOLD			0.1f	//[cm] because of the noise of the camera
 #define KP						800.0f
@@ -31,7 +32,7 @@ extern "C" {
 #define REACHED_LEFT          	3
 #define REACHED_RIGHT           4
 
-#define DIST_OBS_MAX            6 // [cm]
+#define DIST_OBS_MAX            3 // [cm]
 
 //numero des différents capteur de proximité
 #define FRONT_RIGHT             0

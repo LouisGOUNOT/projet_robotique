@@ -67,7 +67,7 @@ void sound_remote(float* data){
 	}
 	//Target black line
 	else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
-		select_target_color(1);
+//		select_target_color(1);
 		set_rgb_led(LED2,0,255,0);
 	}
 	//Target blue

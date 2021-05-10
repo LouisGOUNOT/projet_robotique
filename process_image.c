@@ -34,6 +34,7 @@ static float meanRatio = 0;
 static uint8_t i_red = 0;
 static uint8_t i_blue = 0;
 static uint16_t camera_height = 460; //460 pixels bas louis 100 pour clement
+static float pxtocm = PXTOCM_BLACK_LINE;
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -48,7 +49,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 	uint8_t stop = 0, wrong_line = 0, line_not_found = 0;
 	uint32_t mean = 0;
 
-	static uint16_t last_width = PXTOCM/GOAL_DISTANCE;
+	static uint16_t last_width = PXTOCM_BLACK_LINE/GOAL_DISTANCE;
 
 	//performs an average
 	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){
@@ -132,7 +133,7 @@ uint16_t extract_line_mean(uint8_t *buffer){
 	uint8_t stop = 0, wrong_line = 0, line_not_found = 0;
 	uint32_t mean = 0;
 
-	static uint16_t last_width = PXTOCM/GOAL_DISTANCE;
+//	static uint16_t last_width = PXTOCM_BLACK_LINE/GOAL_DISTANCE;
 
 	//performs an average
 	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){
@@ -192,9 +193,9 @@ uint16_t extract_line_mean(uint8_t *buffer){
 	if(line_not_found){
 		begin = 0;
 		end = 0;
-		width = last_width;
+		width = 0;
 	}else{
-		last_width = width = (end - begin);
+	 width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
 	}
 	mean = 0;
@@ -254,8 +255,9 @@ static THD_FUNCTION(ProcessImage, arg) {
     	//waits until an image has been captured
         chBSemWait(&image_ready_sem);
 		//gets the pointer to the array filled with the last image in RGB565    
+
 		img_buff_ptr = dcmi_get_last_image_ptr();
-		if (target_color == 1){
+		if ((target_color == 1)&&(camera_height == 460)){
 
 		//Extracts only the red pixels
 		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
@@ -269,7 +271,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		chprintf((BaseSequentialStream *)&SD3, "lineWidth = %d\n", lineWidth);
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth>80){
-			distance_cm = PXTOCM/lineWidth;
+			distance_cm = pxtocm/lineWidth;
 			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
 		}
 		else {
@@ -313,7 +315,9 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 			//gets lineWidth in pixels
 			lineWidth = temp_end - temp_begin;
-
+			if(lineWidth>60){
+				distance_cm = pxtocm/lineWidth;
+			}
 			meanRatio = blueMean/redMean;
 
 
@@ -333,8 +337,11 @@ static THD_FUNCTION(ProcessImage, arg) {
 						i_blue++;
 						if (i_blue == 5){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
 							set_rgb_led(LED2,0,0,0);
-							right_motor_set_speed(0);
-							left_motor_set_speed(0);
+//							right_motor_set_speed(0);
+//							left_motor_set_speed(0);
+							select_target_color(1);
+							pxtocm = PXTOCM_COLOR;
+							camera_height = 100;
 							i_blue = 0;
 						}
 					}
@@ -351,8 +358,9 @@ static THD_FUNCTION(ProcessImage, arg) {
 						i_red++;
 						if (i_red == 5){
 							set_rgb_led(LED2,0,0,0);
-							right_motor_set_speed(0);
-							left_motor_set_speed(0);
+							select_target_color(1);
+							pxtocm = PXTOCM_COLOR;
+							camera_height = 100;
 							i_red = 0;
 						}
 					}
@@ -390,14 +398,16 @@ void select_target_color(uint8_t color_id) {
 				po8030_set_awb(0);
 				//régule contraste avec cste 0< <255
 				po8030_set_contrast(55);
+				pxtocm = PXTOCM_COLOR;
 
 			  break;
 			  // suivi ligne noire
 			case 1:
 				target_color = 1;
 				camera_height = 460;
-				po8030_set_awb(1);
+				po8030_set_awb(0);
 				//régule contraste avec cste 0< <255
+				pxtocm = PXTOCM_BLACK_LINE;
 				po8030_set_contrast(74);
 
 			  break;
@@ -410,6 +420,7 @@ void select_target_color(uint8_t color_id) {
 				po8030_set_awb(0);
 				//régule contraste avec cste 0< <255
 				po8030_set_contrast(55);
+				pxtocm = PXTOCM_COLOR;
 			  break;
 		}
 }

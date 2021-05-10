@@ -10,11 +10,13 @@
 #include <main.h>
 #include <motors.h>
 #include "sensors/proximity.h"
+#include "sensors/VL53L0X/VL53L0X.h"
 #include <spi_comm.h>
 #include <camera/po8030.h>
 #include <chprintf.h>
 #include <audio/microphone.h>
 #include <leds.h>
+
 
 #include <audio_processing.h>
 #include <fft.h>
@@ -23,6 +25,7 @@
 #include <pi_regulator.h>
 #include <process_image.h>
 #include <obstacle.h>
+#include <move.h>
 
 void SendUint8ToComputer(uint8_t* data, uint16_t size)
 {
@@ -96,11 +99,9 @@ int main(void)
 //    timer12_start();
     //inits the motors
     motors_init();
-
     //stars the threads for the pi regulator and the processing of the image
-    pi_regulator_start();
+//    pi_regulator_start();
     process_image_start();
-
     //start the threads for the detector of proximity
     proximity_start();
 
@@ -111,14 +112,15 @@ int main(void)
     //send_tab is used to save the state of the buffer to send (double buffering)
     //to avoid modifications of the buffer while sending it
     static float send_tab[FFT_SIZE];
-
+	right_motor_set_speed(-100);
+	left_motor_set_speed(100);
 //		//starts the microphones processing thread.
 //		//it calls the callback given in parameter when samples are ready
 		mic_start(&processAudioData);
-
+	    movement_start();
+	    VL53L0X_start();
     /* Infinite loop. */
     while (1) {
-
 
         chThdSleepMilliseconds(1000);
     }
