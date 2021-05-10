@@ -9,7 +9,7 @@
 #include <process_image.h>
 
 
-static uint16_t distance_cm = 0;
+static float distance_cm = 0.0f;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 
 //semaphore
