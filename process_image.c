@@ -14,7 +14,7 @@
 
 
 /*
- * masques de base
+ * masques de base A METTRE DANS MAIN.H
  */
 #define MSK_RED1 0b11111000
 #define	MSK_RED2 0b00000000
@@ -35,6 +35,8 @@ static uint8_t i_red = 0;
 static uint8_t i_blue = 0;
 static uint16_t camera_height = 460; //460 pixels bas louis 100 pour clement
 static float pxtocm = PXTOCM_BLACK_LINE;
+static uint16_t dist_retour = 11;
+static uint16_t compte_tour = 0;
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -288,88 +290,95 @@ static THD_FUNCTION(ProcessImage, arg) {
 		send_to_computer = !send_to_computer;
 		}
 		else {
+				compte_tour++;
+				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
+					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
+					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
 
-			for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
-				green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
-				blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
+					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
+					blue_temp = (img_buff_ptr[i] & MSK_BLUE2);
 
-				green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
-				blue_temp = (img_buff_ptr[i] & MSK_BLUE2);
-
-				image[i/2] = green_temp + blue_temp;
-			}
-
-			redMean = extract_line_mean(image);
-
-			img_buff_ptr = dcmi_get_last_image_ptr();
-
-			// detecte pixels rouges et verts pour trouver bleu
-			for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
-				red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
-				green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
-				green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
-				image[i/2] = red_temp + green_temp;
-			}
-			blueMean = extract_line_mean(image);
-
-
-			//gets lineWidth in pixels
-			lineWidth = temp_end - temp_begin;
-			if(lineWidth>60){
-				distance_cm = pxtocm/lineWidth;
-			}
-			meanRatio = blueMean/redMean;
-
-
-			// CONDITIONS AVEC ACTIONS SUR LE MOTEUR
-
-			if((blueMean + redMean) > 1){
-				// ratio entre 1 et 5 bleu
-				// si trouve bleu quand c'est demandé alors arrete de tourner et éteint la led et moteur
-				// si pas demandé alors reset le compteur de rouge pour éviter les faux positifs
-//					if((meanRatio < 5.5)&&(meanRatio > 0.5)&&(target_color == 2))
-				if((meanRatio < 5.5)&&(meanRatio > 0.5))
-				{
-					if (target_color == 0){
-						i_red = 0;
-					}
-					else{
-						i_blue++;
-						if (i_blue == 5){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
-							set_rgb_led(LED2,0,0,0);
-//							right_motor_set_speed(0);
-//							left_motor_set_speed(0);
-							select_target_color(1);
-							pxtocm = PXTOCM_COLOR;
-							camera_height = 100;
-							i_blue = 0;
-						}
-					}
+					image[i/2] = green_temp + blue_temp;
 				}
-				// ratio entre 5-5 et 25 rouge
-				// si trouve rouge quand c'est demandé alors arrete de tourner et éteint la led et moteurs
-//					else if((meanRatio < 25)&&(meanRatio > 5.5)&&(target_color == 0))
-				else if((meanRatio < 25)&&(meanRatio > 5.5))
-				{
-					if (target_color == 2){
-						i_blue = 0;
-					}
-					else{
-						i_red++;
-						if (i_red == 5){
-							set_rgb_led(LED2,0,0,0);
-							select_target_color(1);
-							pxtocm = PXTOCM_COLOR;
-							camera_height = 100;
+
+				redMean = extract_line_mean(image);
+
+				img_buff_ptr = dcmi_get_last_image_ptr();
+
+				// detecte pixels rouges et verts pour trouver bleu
+				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
+					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
+					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
+					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
+					image[i/2] = red_temp + green_temp;
+				}
+				blueMean = extract_line_mean(image);
+
+
+				//gets lineWidth in pixels
+				lineWidth = temp_end - temp_begin;
+				if(lineWidth>60){
+					distance_cm = pxtocm/lineWidth;
+				}
+				meanRatio = blueMean/redMean;
+
+
+				// CONDITIONS AVEC ACTIONS SUR LE MOTEUR
+
+				if((blueMean + redMean) > 1){
+					// ratio entre 1 et 5 bleu
+					// si trouve bleu quand c'est demandé alors arrete de tourner et éteint la led et moteur
+					// si pas demandé alors reset le compteur de rouge pour éviter les faux positifs
+	//					if((meanRatio < 5.5)&&(meanRatio > 0.5)&&(target_color == 2))
+					if((meanRatio < 5.5)&&(meanRatio > 0.5))
+					{
+						if (target_color == 0){
 							i_red = 0;
 						}
+						else{
+							i_blue++;
+							if (i_blue == 5){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
+								set_rgb_led(LED2,0,0,0);
+	//							right_motor_set_speed(0);
+	//							left_motor_set_speed(0);
+								select_target_color(1);
+								pxtocm = PXTOCM_COLOR;
+								camera_height = 100;
+								i_blue = 0;
+								dist_retour = distance_cm;
+								compte_tour = 0;
+							}
+						}
 					}
-				}
+					// ratio entre 5-5 et 25 rouge
+					// si trouve rouge quand c'est demandé alors arrete de tourner et éteint la led et moteurs
+	//					else if((meanRatio < 25)&&(meanRatio > 5.5)&&(target_color == 0))
+					else if((meanRatio < 25)&&(meanRatio > 5.5))
+					{
+						if (target_color == 2){
+							i_blue = 0;
+						}
+						else{
+							i_red++;
+							if (i_red == 5){
+								set_rgb_led(LED2,0,0,0);
+								select_target_color(1);
+								pxtocm = PXTOCM_COLOR;
+								camera_height = 100;
+								i_red = 0;
+								dist_retour = distance_cm;
+								compte_tour = 0;
+							}
+						}
+					}
+
 			}
-//	//converts the width into a distance between the robot and the camera
-//	if(lineWidth){
-//		distance_cm = PXTOCM/lineWidth;
-//	}
+				//reprend ligne noire si toruve rien apres 1 tour
+				if (compte_tour > 320){
+					compte_tour = 0;
+					select_target_color(1);
+
+				}
 		}
     }
 }
@@ -427,4 +436,8 @@ void select_target_color(uint8_t color_id) {
 
 uint8_t get_target_color(void) {
 	return target_color;
+}
+
+uint16_t get_dist_retour(void) {
+	return dist_retour;
 }

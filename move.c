@@ -75,17 +75,22 @@ static THD_FUNCTION(Movement, arg) {
 
 			if((!get_distance_cm()) && obstacle_detected()){
 				chprintf((BaseSequentialStream *)&SD3, "pas de ligne et obstacle");
-
+//demi tour
 			   right_motor_set_speed(-800);
 			   left_motor_set_speed(800);
-				chThdSleepMilliseconds(820);
+			   chThdSleepMilliseconds(820);
+//				retourne sur ligne
+			   float travel_time = get_dist_retour()*1000/10.32;
+			   right_motor_set_speed(800);
+			   left_motor_set_speed(800);
+			   chThdSleepMilliseconds(travel_time);
 
 			}
 			//si pas de ligne et pas d'obstacle le robot ne bouge pas;
 			else if((!get_distance_cm()) && (!obstacle_detected())){
 				chprintf((BaseSequentialStream *)&SD3, "non obstacle et ligne");
-				right_motor_set_speed(600);
-				left_motor_set_speed(600);
+				right_motor_set_speed(0);
+				left_motor_set_speed(0);
 			}
     	}
     	//100Hz
