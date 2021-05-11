@@ -36,14 +36,14 @@ static uint8_t couleur_entendue = 1;
 
 #define MIN_FREQ		22	//we don't analyze before this index to not use resources for nothing
 #define FREQ_RED	    26	//406
-#define FREQ_GREEN		19	//850
+#define FREQ_GREEN		32	//850
 #define FREQ_BLUE		38	//602
 #define MAX_FREQ		42	//we don't analyze after this index to not use resources for nothing
 
 #define FREQ_RED_L		(FREQ_RED-1)
 #define FREQ_RED_H		(FREQ_RED+1)
-#define FREQ_GREEN_L			(FREQ_GREEN-1)
-#define FREQ_GREEN_H			(FREQ_GREEN+1)
+#define FREQ_GREEN_L			(FREQ_GREEN-5)
+#define FREQ_GREEN_H			(FREQ_GREEN+5)
 #define FREQ_BLUE_L		(FREQ_BLUE-1)
 #define FREQ_BLUE_H		(FREQ_BLUE+1)
 
@@ -65,7 +65,7 @@ void sound_remote(float* data){
 
 	//Target red
 	if(max_norm_index >= FREQ_RED_L && max_norm_index <= FREQ_RED_H){
-//		select_target_color(0);
+
 		if (compteur_bleu == 0){
 			compteur_rouge++;
 		}
@@ -75,13 +75,15 @@ void sound_remote(float* data){
 		if (compteur_rouge > 20){
 			compteur_rouge = 0;
 			set_rgb_led(LED2,255,0,0);
+			select_target_color(0);
 		}
 
 	}
-	//Target black line
+	//Passe bande
 	else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
-//		select_target_color(1);
-//		set_rgb_led(LED2,0,255,0);
+		compteur_rouge = 0;
+		compteur_bleu = 0;
+		set_rgb_led(LED2,0,0,0);
 	}
 	//Target blue
 	else if(max_norm_index >= FREQ_BLUE_L && max_norm_index <= FREQ_BLUE_H){
@@ -94,9 +96,10 @@ void sound_remote(float* data){
 		if (compteur_bleu > 20){
 			compteur_bleu = 0;
 			set_rgb_led(LED2,0,0,255);
+			select_target_color(2);
 		}
 
-//		select_target_color(2);;
+
 		po8030_set_rgb_gain(0x50, 0x50,0x00);
 	}
 }
