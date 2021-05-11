@@ -28,14 +28,17 @@ static float micLeft_output[FFT_SIZE];
 static float micRight_output[FFT_SIZE];
 static float micFront_output[FFT_SIZE];
 static float micBack_output[FFT_SIZE];
+static uint8_t compteur_rouge = 0 ;
+static uint8_t compteur_bleu = 0 ;
+static uint8_t couleur_entendue = 1;
 
-#define MIN_VALUE_THRESHOLD	20000
+#define MIN_VALUE_THRESHOLD	10000
 
-#define MIN_FREQ		50	//we don't analyze before this index to not use resources for nothing
-#define FREQ_RED	    51	//800Hz
-#define FREQ_GREEN		54	//850
-#define FREQ_BLUE		57	//900Hz
-#define MAX_FREQ		58	//we don't analyze after this index to not use resources for nothing
+#define MIN_FREQ		22	//we don't analyze before this index to not use resources for nothing
+#define FREQ_RED	    26	//406
+#define FREQ_GREEN		19	//850
+#define FREQ_BLUE		38	//602
+#define MAX_FREQ		42	//we don't analyze after this index to not use resources for nothing
 
 #define FREQ_RED_L		(FREQ_RED-1)
 #define FREQ_RED_H		(FREQ_RED+1)
@@ -63,17 +66,37 @@ void sound_remote(float* data){
 	//Target red
 	if(max_norm_index >= FREQ_RED_L && max_norm_index <= FREQ_RED_H){
 //		select_target_color(0);
-		set_rgb_led(LED2,255,0,0);
+		if (compteur_bleu == 0){
+			compteur_rouge++;
+		}
+		else {
+			compteur_bleu = 0;
+		}
+		if (compteur_rouge > 20){
+			compteur_rouge = 0;
+			set_rgb_led(LED2,255,0,0);
+		}
+
 	}
 	//Target black line
 	else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
 //		select_target_color(1);
-		set_rgb_led(LED2,0,255,0);
+//		set_rgb_led(LED2,0,255,0);
 	}
 	//Target blue
 	else if(max_norm_index >= FREQ_BLUE_L && max_norm_index <= FREQ_BLUE_H){
-//		select_target_color(2);
-		set_rgb_led(LED2,0,0,255);
+		if (compteur_rouge == 0){
+			compteur_bleu++;
+		}
+		else {
+			compteur_rouge = 0;
+		}
+		if (compteur_bleu > 20){
+			compteur_bleu = 0;
+			set_rgb_led(LED2,0,0,255);
+		}
+
+//		select_target_color(2);;
 		po8030_set_rgb_gain(0x50, 0x50,0x00);
 	}
 }
@@ -144,7 +167,7 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		*/
 		arm_cmplx_mag_f32(micRight_cmplx_input, micRight_output, FFT_SIZE);
 		arm_cmplx_mag_f32(micLeft_cmplx_input, micLeft_output, FFT_SIZE);
-		arm_cmplx_mag_f32(micFront_cmplx_input, micFront_output, FFT_SIZE);
+//		arm_cmplx_mag_f32(micFront_cmplx_input, micFront_output, FFT_SIZE);
 		arm_cmplx_mag_f32(micBack_cmplx_input, micBack_output, FFT_SIZE);
 
 		//sends only one FFT result over 10 for 1 mic to not flood the computer
@@ -172,9 +195,9 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	else if (name == RIGHT_CMPLX_INPUT){
 		return micRight_cmplx_input;
 	}
-	else if (name == FRONT_CMPLX_INPUT){
-		return micFront_cmplx_input;
-	}
+//	else if (name == FRONT_CMPLX_INPUT){
+//		return micFront_cmplx_input;
+//	}
 	else if (name == BACK_CMPLX_INPUT){
 		return micBack_cmplx_input;
 	}
@@ -184,9 +207,9 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	else if (name == RIGHT_OUTPUT){
 		return micRight_output;
 	}
-	else if (name == FRONT_OUTPUT){
-		return micFront_output;
-	}
+//	else if (name == FRONT_OUTPUT){
+//		return micFront_output;
+//	}
 	else if (name == BACK_OUTPUT){
 		return micBack_output;
 	}
