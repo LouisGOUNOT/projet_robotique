@@ -366,7 +366,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 						}
 						else{
 							i_blue++;
-							if (i_blue == 5){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
+							if ((i_blue == 5)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<5)){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
 								set_rgb_led(LED2,0,0,0);
 								set_rgb_led(LED4,0,0,0);
 	//							right_motor_set_speed(0);
@@ -392,7 +392,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 						}
 						else{
 							i_red++;
-							if (i_red == 5){
+							if ((i_red == 5)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<5)){
 								set_rgb_led(LED2,0,0,0);
 								set_rgb_led(LED4,0,0,0);
 								select_target_color(1);

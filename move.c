@@ -65,19 +65,19 @@ static THD_FUNCTION(Movement, arg) {
 				left_motor_set_speed(0.4*speed + ROTATION_COEFF * speed_correction);
 
 				if (get_camera_height()==100){
-//					if (speed_correction){
+//					while (speed_correction < 5){
+//
+//					}
 //					right_motor_set_speed(- ROTATION_COEFF * speed_correction);
 //					left_motor_set_speed( + ROTATION_COEFF * speed_correction);
-//					}
-//					else{
 						float travel_time = get_distance_cm()*3000/10.32;
-						uint8_t i =0;
-						while ( i <100){
-							chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
-							i++;
-							chThdSleepMilliseconds(10);
-
-						}
+//						uint8_t i =0;
+//						while ( i <100){
+//							chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
+//							i++;
+//							chThdSleepMilliseconds(10);
+//
+//						}
 
 						chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
 						   right_motor_set_speed(800);
@@ -92,12 +92,20 @@ static THD_FUNCTION(Movement, arg) {
 							set_camera_height(460);
 							po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 
-					//}
+					}
 
+				}
+				else{
+					//if the line is nearly in front of the camera, don't rotate
+					if(abs(speed_correction) < ROTATION_THRESHOLD){
+						speed_correction = 0;
+					}
+//					right_motor_set_speed(0.4*speed - ROTATION_COEFF * speed_correction);
+//					left_motor_set_speed(0.4*speed + ROTATION_COEFF * speed_correction);
 				}
 
 
-				}
+
 //				chprintf((BaseSequentialStream *)&SD3, "vu par time of flight =  %d\n", VL53L0X_get_dist_mm());
 //				if (VL53L0X_get_dist_mm() < 80){
 ////					chprintf((BaseSequentialStream *)&SD3, "rentre dans ime of flight");
