@@ -506,3 +506,6 @@ uint16_t get_dist_retour(void) {
 void set_dist_retour(float dist){
 	dist_retour = dist;
 }
+void set_camera_height(uint16_t height){
+	camera_height=height;
+}

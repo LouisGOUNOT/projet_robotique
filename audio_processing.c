@@ -83,7 +83,7 @@ void sound_remote(float* data){
 	else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
 		compteur_rouge = 0;
 		compteur_bleu = 0;
-		set_rgb_led(LED2,0,0,0);
+//		set_rgb_led(LED2,0,0,0);
 	}
 	//Target blue
 	else if(max_norm_index >= FREQ_BLUE_L && max_norm_index <= FREQ_BLUE_H){

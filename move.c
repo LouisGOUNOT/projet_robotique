@@ -90,12 +90,15 @@ static THD_FUNCTION(Movement, arg) {
 			   left_motor_set_speed(800);
 			   chThdSleepMilliseconds(travel_time);
 			   po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+				set_camera_height(460);
 
 			}
 			//si pas de ligne et pas d'obstacle le robot ne bouge pas;
 			else if((!get_distance_cm()) && (!obstacle_detected())){
 //				chprintf((BaseSequentialStream *)&SD3, "non obstacle et ligne");
 				po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+				set_camera_height(460);
+
 				set_dist_retour(1.0f);
 				right_motor_set_speed(-200);
 				left_motor_set_speed(200);
