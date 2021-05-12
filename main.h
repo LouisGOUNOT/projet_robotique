@@ -12,13 +12,15 @@ extern "C" {
 
 //constants for the differents parts of the project
 #define IMAGE_BUFFER_SIZE		640
-#define WIDTH_SLOPE				20 // 20 avant chez louis peut ne pas marcher
-#define MIN_LINE_WIDTH			60// 40 avant chez clement peut ne pas marcher
+#define WIDTH_SLOPE				20 // 20 avant chez louis peut ne pas marcher, 5 chez clement
+#define WIDTH_SLOPE_COLOR		5 // 20 avant chez louis peut ne pas marcher, 5 chez clement
+#define MIN_LINE_WIDTH			60// 40 avant chez clement peut ne pas marcher, 60 chez louis
+#define MIN_LINE_WIDTH_COLOR	40 // 40 avant chez clement peut ne pas marcher, 60 chez louis
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			2 
 #define SPEED_COEFF				0.50f
 #define PXTOCM_BLACK_LINE		1200.0f //experimental value
-#define PXTOCM_COLOR			1400.0f //experimental value
+#define PXTOCM_COLOR			1200.0f //experimental value
 #define GOAL_DISTANCE 			2.0f
 #define MAX_DISTANCE 			30.0f
 #define ERROR_THRESHOLD			0.1f	//[cm] because of the noise of the camera

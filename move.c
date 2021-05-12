@@ -12,6 +12,7 @@
 #include <usbcfg.h>
 #include <chprintf.h>
 #include "sensors/VL53L0X/VL53L0X.h"
+#include <camera/po8030.h>
 
 
 #include <main.h>
@@ -43,7 +44,7 @@ static THD_FUNCTION(Movement, arg) {
 			if(get_distance_cm() ){
 
 
-				chprintf((BaseSequentialStream *)&SD3, "jesuisdangetlineposition");
+//				chprintf((BaseSequentialStream *)&SD3, "jesuisdangetlineposition");
 
 				//computes the speed to give to the motors
 				//distance_cm is modified by the image processing thread
@@ -61,9 +62,9 @@ static THD_FUNCTION(Movement, arg) {
 //				left_motor_set_speed(0);
 				right_motor_set_speed(0.2*speed - ROTATION_COEFF * speed_correction);
 				left_motor_set_speed(0.2*speed + ROTATION_COEFF * speed_correction);
-				chprintf((BaseSequentialStream *)&SD3, "vu par time of flight =  %d\n", VL53L0X_get_dist_mm());
+//				chprintf((BaseSequentialStream *)&SD3, "vu par time of flight =  %d\n", VL53L0X_get_dist_mm());
 				if (VL53L0X_get_dist_mm() < 80){
-					chprintf((BaseSequentialStream *)&SD3, "rentre dans ime of flight");
+//					chprintf((BaseSequentialStream *)&SD3, "rentre dans ime of flight");
 					   right_motor_set_speed(-800);
 					   left_motor_set_speed(800);
 					   chThdSleepMilliseconds(820);
@@ -74,23 +75,30 @@ static THD_FUNCTION(Movement, arg) {
 
 
 			if((!get_distance_cm()) && obstacle_detected()){
-				chprintf((BaseSequentialStream *)&SD3, "pas de ligne et obstacle");
+//				chprintf((BaseSequentialStream *)&SD3, "pas de ligne et obstacle");
 //demi tour
 			   right_motor_set_speed(-800);
 			   left_motor_set_speed(800);
 			   chThdSleepMilliseconds(820);
 //				retourne sur ligne
+//			   po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+
 			   float travel_time = get_dist_retour()*1000/10.32;
+//				chprintf((BaseSequentialStream *)&SD3, "dist_retour =  %f\n", get_dist_retour());
+//				chprintf((BaseSequentialStream *)&SD3, "travel time =  %f\n", travel_time);
 			   right_motor_set_speed(800);
 			   left_motor_set_speed(800);
 			   chThdSleepMilliseconds(travel_time);
+			   po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 
 			}
 			//si pas de ligne et pas d'obstacle le robot ne bouge pas;
 			else if((!get_distance_cm()) && (!obstacle_detected())){
-				chprintf((BaseSequentialStream *)&SD3, "non obstacle et ligne");
-				right_motor_set_speed(0);
-				left_motor_set_speed(0);
+//				chprintf((BaseSequentialStream *)&SD3, "non obstacle et ligne");
+				po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+				set_dist_retour(1.0f);
+				right_motor_set_speed(-200);
+				left_motor_set_speed(200);
 			}
     	}
     	//100Hz

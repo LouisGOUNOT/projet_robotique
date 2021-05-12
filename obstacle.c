@@ -26,7 +26,7 @@ static uint8_t obstacle_detection(void){
    	//capteurs trop proches d'un objet
     	if((distance_capteurs[FRONT_RIGHT]<DIST_OBS_MAX)||(distance_capteurs[FRONT_LEFT]<DIST_OBS_MAX)){
 //    	    chprintf((BaseSequentialStream *)&SD3, "distance_capteurs devant droit%d\n et capteurs devant gauche %d\n", distance_capteurs[0],distance_capteurs[7]);
-			chprintf((BaseSequentialStream *)&SD3, "dans proxi");
+//			chprintf((BaseSequentialStream *)&SD3, "dans proxi");
 			return REACHED_FRONT;
     	}
     	else return 0;
