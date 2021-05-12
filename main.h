@@ -17,11 +17,11 @@ extern "C" {
 #define MIN_LINE_WIDTH			60// 40 avant chez clement peut ne pas marcher, 60 chez louis
 #define MIN_LINE_WIDTH_COLOR	40 // 40 avant chez clement peut ne pas marcher, 60 chez louis
 #define ROTATION_THRESHOLD		10
-#define ROTATION_COEFF			2 
+#define ROTATION_COEFF			2
 #define SPEED_COEFF				0.50f
 #define PXTOCM_BLACK_LINE		1200.0f //experimental value
-#define PXTOCM_COLOR			1200.0f //experimental value
-#define GOAL_DISTANCE 			2.0f
+#define PXTOCM_COLOR			1000.0f //experimental value
+#define GOAL_DISTANCE 			4.0f
 #define MAX_DISTANCE 			30.0f
 #define ERROR_THRESHOLD			0.1f	//[cm] because of the noise of the camera
 #define KP						800.0f

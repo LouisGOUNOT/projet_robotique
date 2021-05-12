@@ -9,6 +9,7 @@ uint8_t get_target_color(void);
 uint16_t get_dist_retour(void);
 void set_dist_retour(float dist);
 void set_camera_height(uint16_t height);
+uint16_t get_camera_height(void);
 
 
 #endif /* PROCESS_IMAGE_H */

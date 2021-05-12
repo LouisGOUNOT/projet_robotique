@@ -281,7 +281,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 //			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
 		}
 		else {
-			distance_cm= 0.0;
+			distance_cm= 0.0f;
 //			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
 
 		}
@@ -295,6 +295,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		}
 		//CAs recehrche coleur
 		else {
+				chprintf((BaseSequentialStream *)&SD3, "dist_retour= %f\n", dist_retour);
 				compte_tour++;
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
 					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
@@ -418,13 +419,6 @@ static THD_FUNCTION(ProcessImage, arg) {
     }
 }
 
-uint16_t get_distance_cm(void){
-	return distance_cm;
-}
-
-uint16_t get_line_position(void){
-	return line_position;
-}
 
 void process_image_start(void){
 	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO, ProcessImage, NULL);
@@ -487,6 +481,15 @@ void select_target_color(uint8_t color_id) {
 		}
 }
 
+uint16_t get_distance_cm(void){
+	return distance_cm;
+}
+
+uint16_t get_line_position(void){
+	return line_position;
+}
+
+
 uint8_t get_target_color(void) {
 	return target_color;
 }
@@ -503,4 +506,8 @@ void set_dist_retour(float dist){
 }
 void set_camera_height(uint16_t height){
 	camera_height=height;
+}
+
+uint16_t get_camera_height(void){
+	return camera_height;
 }
