@@ -74,7 +74,7 @@ void sound_remote(float* data){
 		}
 		if (compteur_rouge > 20){
 			compteur_rouge = 0;
-			set_rgb_led(LED2,255,0,0);
+//			set_rgb_led(LED2,255,0,0);
 			select_target_color(0);
 		}
 
@@ -95,7 +95,7 @@ void sound_remote(float* data){
 		}
 		if (compteur_bleu > 20){
 			compteur_bleu = 0;
-			set_rgb_led(LED2,0,0,255);
+//			set_rgb_led(LED2,0,0,255);
 			select_target_color(2);
 		}
 

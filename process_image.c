@@ -261,6 +261,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//gets the pointer to the array filled with the last image in RGB565    
 
 		img_buff_ptr = dcmi_get_last_image_ptr();
+
+		//Cas ligne noire
 		if ((target_color == 1)&&(camera_height == 460)){
 
 		//Extracts only the red pixels
@@ -291,8 +293,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//invert the bool
 		send_to_computer = !send_to_computer;
 		}
+		//CAs recehrche coleur
 		else {
-			camera_height = 100;
 				compte_tour++;
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
 					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
@@ -365,6 +367,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 							i_blue++;
 							if (i_blue == 5){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
 								set_rgb_led(LED2,0,0,0);
+								set_rgb_led(LED4,0,0,0);
 	//							right_motor_set_speed(0);
 	//							left_motor_set_speed(0);
 								select_target_color(1);
@@ -390,6 +393,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 							i_red++;
 							if (i_red == 5){
 								set_rgb_led(LED2,0,0,0);
+								set_rgb_led(LED4,0,0,0);
 								select_target_color(1);
 								pxtocm = PXTOCM_COLOR;
 								camera_height = 100;
@@ -403,10 +407,11 @@ static THD_FUNCTION(ProcessImage, arg) {
 					}
 
 			}
-				//reprend ligne noire si toruve rien apres 1 tour
+				//reprend ligne noire si toruve rien apres 1 tour 320 pendant les tests
 				if (compte_tour > 320){
 					compte_tour = 0;
 					select_target_color(1);
+					set_rgb_led(LED2,0,0,0);
 
 				}
 		}
@@ -430,23 +435,18 @@ void select_target_color(uint8_t color_id) {
 	switch (color_id){
 			//choisit le rouge et tourne pour le trouver
 			case 0:
-				target_color = 0;
-				right_motor_set_speed(-100);
-				left_motor_set_speed(100);
-//				camera_height = 100;
-				po8030_set_awb(0);
-				//regule contraste avec cste 0< <255
-//				po8030_set_contrast(55);
-				pxtocm = PXTOCM_COLOR;
+				if(target_color == 1){
+					target_color = 0;
+					set_rgb_led(LED2,255,0,0);
+					right_motor_set_speed(-100);
+					left_motor_set_speed(100);
+					po8030_set_awb(0);
+					pxtocm = PXTOCM_COLOR;
+					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+					po8030_set_awb(0);
+					po8030_set_contrast(55);
+				}
 
-				//setup la camera
-//				dcmi_capture_stop();
-				po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
-//				dcmi_enable_double_buffering();
-//				dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
-//				dcmi_prepare();
-				po8030_set_awb(0);
-				po8030_set_contrast(55);
 
 			  break;
 			  // suivi ligne noire
@@ -466,28 +466,23 @@ void select_target_color(uint8_t color_id) {
 //				dcmi_capture_start();
 				po8030_set_awb(0);
 				po8030_set_contrast(74);
+				set_rgb_led(LED4,255,255,255);
 
 			  break;
 			 //choisit le bleu et tourne pour le trouver
 			case 2:
-				target_color = 2;
-				right_motor_set_speed(-100);
-				left_motor_set_speed(100);
-				camera_height = 100;
-//				po8030_set_awb(0);
-				//régule contraste avec cste 0< <255
-//				po8030_set_contrast(55);
-				pxtocm = PXTOCM_COLOR;
+				if(target_color == 1){
+					target_color = 2;
+					set_rgb_led(LED2,0,0,255);
+					right_motor_set_speed(-100);
+					left_motor_set_speed(100);
+					camera_height = 100;
+					pxtocm = PXTOCM_COLOR;
+					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+					po8030_set_awb(0);
+					po8030_set_contrast(55);
+				}
 
-				//setup la camera
-//				dcmi_capture_stop();
-				po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
-//				dcmi_enable_double_buffering();
-//				dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
-//				dcmi_prepare();
-//				dcmi_capture_start();
-				po8030_set_awb(0);
-				po8030_set_contrast(55);
 			  break;
 		}
 }
