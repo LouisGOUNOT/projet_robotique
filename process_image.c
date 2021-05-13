@@ -359,14 +359,14 @@ static THD_FUNCTION(ProcessImage, arg) {
 					// si trouve bleu quand c'est demandé alors arrete de tourner et éteint la led et moteur
 					// si pas demandé alors reset le compteur de rouge pour éviter les faux positifs
 	//					if((meanRatio < 5.5)&&(meanRatio > 0.5)&&(target_color == 2))
-					if((meanRatio < 5.5)&&(meanRatio > 0.5))
+					if((meanRatio < 10))
 					{
 						if (target_color == 0){
 							i_red = 0;
 						}
 						else{
 							i_blue++;
-							if ((i_blue == 5)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<5)){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
+							if ((i_blue == 2)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<150)){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
 								set_rgb_led(LED2,0,0,0);
 								set_rgb_led(LED4,0,0,0);
 	//							right_motor_set_speed(0);
@@ -378,21 +378,21 @@ static THD_FUNCTION(ProcessImage, arg) {
 								if(dist_retour == 0){
 									dist_retour = distance_cm;
 								}
-								compte_tour = 0;
+								compte_tour = 635;
 							}
 						}
 					}
 					// ratio entre 5-5 et 25 rouge
 					// si trouve rouge quand c'est demandé alors arrete de tourner et éteint la led et moteurs
 	//					else if((meanRatio < 25)&&(meanRatio > 5.5)&&(target_color == 0))
-					else if((meanRatio < 25)&&(meanRatio > 5.5))
+					else if((meanRatio  > 9))
 					{
 						if (target_color == 2){
 							i_blue = 0;
 						}
 						else{
 							i_red++;
-							if ((i_red == 5)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<5)){
+							if ((i_red == 2)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<150)){
 								set_rgb_led(LED2,0,0,0);
 								set_rgb_led(LED4,0,0,0);
 								select_target_color(1);
@@ -402,14 +402,14 @@ static THD_FUNCTION(ProcessImage, arg) {
 								if(dist_retour == 0){
 									dist_retour = distance_cm;
 								}
-								compte_tour = 0;
+								compte_tour = 635;
 							}
 						}
 					}
 
 			}
 				//reprend ligne noire si toruve rien apres 1 tour 320 pendant les tests
-				if (compte_tour > 320){
+				if (compte_tour > 640){
 					compte_tour = 0;
 					select_target_color(1);
 					set_rgb_led(LED2,0,0,0);
@@ -432,8 +432,8 @@ void select_target_color(uint8_t color_id) {
 				if(target_color == 1){
 					target_color = 0;
 					set_rgb_led(LED2,255,0,0);
-					right_motor_set_speed(-100);
-					left_motor_set_speed(100);
+					right_motor_set_speed(-50);
+					left_motor_set_speed(50);
 					po8030_set_awb(0);
 					pxtocm = PXTOCM_COLOR;
 					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
@@ -468,8 +468,8 @@ void select_target_color(uint8_t color_id) {
 				if(target_color == 1){
 					target_color = 2;
 					set_rgb_led(LED2,0,0,255);
-					right_motor_set_speed(-100);
-					left_motor_set_speed(100);
+					right_motor_set_speed(-50);
+					left_motor_set_speed(50);
 					camera_height = 100;
 					pxtocm = PXTOCM_COLOR;
 					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);

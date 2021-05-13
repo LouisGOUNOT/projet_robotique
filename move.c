@@ -77,7 +77,7 @@ static THD_FUNCTION(Movement, arg) {
 //					}
 //					right_motor_set_speed(- ROTATION_COEFF * speed_correction);
 //					left_motor_set_speed( + ROTATION_COEFF * speed_correction);
-						float travel_time = get_distance_cm()*3000/10.32;
+						float travel_time = get_distance_cm()*2700/10.32;
 //						uint8_t i =0;
 //						while ( i <100){
 //							chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
