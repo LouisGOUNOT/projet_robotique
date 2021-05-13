@@ -13,6 +13,7 @@
 #include <chprintf.h>
 #include "sensors/VL53L0X/VL53L0X.h"
 #include <camera/po8030.h>
+#include <leds.h>
 
 
 #include <main.h>
@@ -61,8 +62,14 @@ static THD_FUNCTION(Movement, arg) {
 				//applies the speed from the PI regulator and the correction for the rotation
 //				right_motor_set_speed(0);
 //				left_motor_set_speed(0);
-				right_motor_set_speed(0.4*speed - ROTATION_COEFF * speed_correction);
-				left_motor_set_speed(0.4*speed + ROTATION_COEFF * speed_correction);
+//				right_motor_set_speed(0);
+//				left_motor_set_speed(0);
+				right_motor_set_speed(0.27*speed - ROTATION_COEFF * speed_correction);
+				left_motor_set_speed(0.27*speed + ROTATION_COEFF * speed_correction);
+
+				set_rgb_led(LED8,255,0,0);
+//				chThdSleepMilliseconds(1000);
+//				set_rgb_led(LED8,0,0,0);
 
 				if (get_camera_height()==100){
 //					while (speed_correction < 5){
@@ -79,7 +86,11 @@ static THD_FUNCTION(Movement, arg) {
 //
 //						}
 
-						chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
+						set_rgb_led(LED8,0,255,0);
+//						chThdSleepMilliseconds(1000);
+//						set_rgb_led(LED8,0,0,0);
+
+//						chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
 						   right_motor_set_speed(800);
 						   left_motor_set_speed(800);
 							chThdSleepMilliseconds(travel_time);
@@ -95,14 +106,14 @@ static THD_FUNCTION(Movement, arg) {
 					}
 
 				}
-				else{
-					//if the line is nearly in front of the camera, don't rotate
-					if(abs(speed_correction) < ROTATION_THRESHOLD){
-						speed_correction = 0;
-					}
+//				else{
+//					//if the line is nearly in front of the camera, don't rotate
+//					if(abs(speed_correction) < ROTATION_THRESHOLD){
+//						speed_correction = 0;
+//					}
 //					right_motor_set_speed(0.4*speed - ROTATION_COEFF * speed_correction);
 //					left_motor_set_speed(0.4*speed + ROTATION_COEFF * speed_correction);
-				}
+//				}
 
 
 
@@ -121,6 +132,10 @@ static THD_FUNCTION(Movement, arg) {
 			if((!get_distance_cm()) && obstacle_detected()&&(get_camera_height()==460)){
 //				chprintf((BaseSequentialStream *)&SD3, "pas de ligne et obstacle");
 //demi tour
+				set_rgb_led(LED8,0,0,255);
+//				chThdSleepMilliseconds(1000);
+//				set_rgb_led(LED8,0,0,0);
+
 			   right_motor_set_speed(-800);
 			   left_motor_set_speed(800);
 			   chThdSleepMilliseconds(820);
@@ -151,6 +166,11 @@ static THD_FUNCTION(Movement, arg) {
 
 			//si pas de ligne et pas d'obstacle le robot ne bouge pas;
 			if((!get_distance_cm()) && (!obstacle_detected())&&(get_camera_height()==460)){
+
+				set_rgb_led(LED8,0,255,255);
+//				chThdSleepMilliseconds(1000);
+//				set_rgb_led(LED8,0,0,0);
+
 //				chprintf((BaseSequentialStream *)&SD3, "non obstacle et ligne");
 				po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 				set_camera_height(460);

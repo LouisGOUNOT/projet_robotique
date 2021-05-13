@@ -295,7 +295,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		}
 		//CAs recehrche coleur
 		else {
-				chprintf((BaseSequentialStream *)&SD3, "dist_retour= %f\n", dist_retour);
+//				chprintf((BaseSequentialStream *)&SD3, "dist_retour= %f\n", dist_retour);
 				compte_tour++;
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
 					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
