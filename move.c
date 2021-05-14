@@ -187,7 +187,7 @@ static THD_FUNCTION(Movement, arg) {
         else{
 //        	float travel_time = get_distance_cm()*2700/10.32;
 //        	chThdSleepMilliseconds(2*travel_time + 1820);
-        	chThdSleepMilliseconds(12000);
+        	chThdSleepMilliseconds(6000);
         }
     }
 
