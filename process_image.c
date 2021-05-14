@@ -10,6 +10,7 @@
 
 #include <process_image.h>
 #include <audio_processing.h>
+#include "memory_protection.h"
 
 
 
@@ -340,12 +341,15 @@ static THD_FUNCTION(ProcessImage, arg) {
 				}
 				//gets lineWidth in pixels
 				lineWidth = temp_end - temp_begin;
-				if(lineWidth>30){
+				if(lineWidth>50){
 					distance_cm = pxtocm/lineWidth;
-				}
-				meanRatio = blueMean/redMean;
-//				chprintf((BaseSequentialStream *)&SD3, "meanRatio= %f\n", meanRatio);
 
+				meanRatio = blueMean/redMean;
+				chprintf((BaseSequentialStream *)&SD3, "meanRatio= %f\n", meanRatio);
+				}
+				else{
+					meanRatio = 0;
+				}
 //				//search for a line in the image and gets its width in pixels
 //				lineWidth = extract_line_width(image);
 //				chprintf((BaseSequentialStream *)&SD3, "temp_begin= %d\n", temp_begin);
@@ -354,65 +358,127 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 				// CONDITIONS AVEC ACTIONS SUR LE MOTEUR
 
-				if((blueMean + redMean) > 1){
+				if(((blueMean + redMean) > 1)&&(lineWidth>40)){
+//					chSysLock();
 					// ratio entre 1 et 5 bleu
 					// si trouve bleu quand c'est demandé alors arrete de tourner et éteint la led et moteur
 					// si pas demandé alors reset le compteur de rouge pour éviter les faux positifs
 	//					if((meanRatio < 5.5)&&(meanRatio > 0.5)&&(target_color == 2))
-					if((meanRatio < 10))
+					if((meanRatio < 3)&&(meanRatio  > 0))
 					{
 						if (target_color == 0){
 							i_red = 0;
 						}
 						else{
 							i_blue++;
-							if ((i_blue == 2)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<150)){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
+							if (((get_line_position() - (IMAGE_BUFFER_SIZE/2))<70)){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
 								set_rgb_led(LED2,0,0,0);
 								set_rgb_led(LED4,0,0,0);
 	//							right_motor_set_speed(0);
 	//							left_motor_set_speed(0);
-								select_target_color(1);
+//								select_target_color(1);
 								pxtocm = PXTOCM_COLOR;
-								camera_height = 100;
+								set_rgb_led(LED8,0,255,0);
+//								chThdSleepMilliseconds(2000);
+								chprintf((BaseSequentialStream *)&SD3, "JE SUIS DANS DETECTION BLEU");
+								// COPIE COLLé DES ACTIONS QUAND TROUVE
+								uint16_t travel_time = distance_cm*2700/10.32;
+								chprintf((BaseSequentialStream *)&SD3, "traveltime =%f\n",travel_time);
+
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+								right_motor_set_speed(800);
+								left_motor_set_speed(800);
+								wait_ms(travel_time);
+								right_motor_set_speed(-800);
+								left_motor_set_speed(800);
+								wait_ms(675);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+								right_motor_set_speed(800);
+								left_motor_set_speed(800);
+								wait_ms(travel_time);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+
+//								set_rgb_led(LED8,0,0,0);
+								select_target_color(1);
 								i_blue = 0;
-								if(dist_retour == 0){
-									dist_retour = distance_cm;
-								}
-								compte_tour = 635;
+//								if(dist_retour == 0){
+//									dist_retour = distance_cm;
+//								}
+								compte_tour = 641;
+								set_rgb_led(LED8,0,0,0);
 							}
 						}
 					}
 					// ratio entre 5-5 et 25 rouge
 					// si trouve rouge quand c'est demandé alors arrete de tourner et éteint la led et moteurs
 	//					else if((meanRatio < 25)&&(meanRatio > 5.5)&&(target_color == 0))
-					else if((meanRatio  > 9))
+					else if((meanRatio  > 2))
 					{
-						if (target_color == 2){
-							i_blue = 0;
-						}
-						else{
+
+//						if (target_color == 2){
+//							i_blue = 0;
+//						}
+//						else{
 							i_red++;
-							if ((i_red == 2)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<150)){
+//							if ((i_red > 2)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<150)){
+							if (((get_line_position() - (IMAGE_BUFFER_SIZE/2))<70)){
 								set_rgb_led(LED2,0,0,0);
 								set_rgb_led(LED4,0,0,0);
-								select_target_color(1);
+//								select_target_color(1);
 								pxtocm = PXTOCM_COLOR;
 								camera_height = 100;
-								i_red = 0;
-								if(dist_retour == 0){
-									dist_retour = distance_cm;
-								}
-								compte_tour = 635;
-							}
+								set_rgb_led(LED8,0,255,0);
+//								chThdSleepMilliseconds(2000);
+								chprintf((BaseSequentialStream *)&SD3, "JE SUIS DANS DETECTION ROUGE");
+								// COPIE COLLé DES ACTIONS QUAND TROUVE
+								uint16_t travel_time = distance_cm*2700/10.32;
+								chprintf((BaseSequentialStream *)&SD3, "traveltime =%f\n",travel_time);
+
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+								right_motor_set_speed(800);
+								left_motor_set_speed(800);
+								wait_ms(travel_time);
+								right_motor_set_speed(-800);
+								left_motor_set_speed(800);
+								wait_ms(675);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+								right_motor_set_speed(800);
+								left_motor_set_speed(800);
+								wait_ms(travel_time);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+//								set_rgb_led(LED8,0,0,0);
+
+								select_target_color(1);
+
+//								if(dist_retour == 0){
+//									dist_retour = distance_cm;
+//								}
+								compte_tour = 641;
+								set_rgb_led(LED8,0,0,0);
+//							}
 						}
 					}
-
+//					chSysUnlock();
 			}
 				//reprend ligne noire si toruve rien apres 1 tour 320 pendant les tests
 				if (compte_tour > 640){
 					compte_tour = 0;
-					select_target_color(1);
 					set_rgb_led(LED2,0,0,0);
+					set_rgb_led(LED8,0,0,0);
+					select_target_color(1);
+
 
 				}
 		}
@@ -421,8 +487,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 
 void process_image_start(void){
-	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO, ProcessImage, NULL);
-	chThdCreateStatic(waCaptureImage, sizeof(waCaptureImage), NORMALPRIO, CaptureImage, NULL);
+	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO+1, ProcessImage, NULL);
+	chThdCreateStatic(waCaptureImage, sizeof(waCaptureImage), NORMALPRIO+1, CaptureImage, NULL);
 }
 
 void select_target_color(uint8_t color_id) {
@@ -430,15 +496,20 @@ void select_target_color(uint8_t color_id) {
 			//choisit le rouge et tourne pour le trouver
 			case 0:
 				if(target_color == 1){
-					target_color = 0;
-					set_rgb_led(LED2,255,0,0);
-					right_motor_set_speed(-50);
-					left_motor_set_speed(50);
-					po8030_set_awb(0);
+					right_motor_set_speed(0);
+					left_motor_set_speed(0);
+					camera_height = 100;
 					pxtocm = PXTOCM_COLOR;
 					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 					po8030_set_awb(0);
 					po8030_set_contrast(55);
+			    	//Capture une image pour réactualiser le buffer et éviter de detecter la ligne noire dès le debut
+			        chBSemWait(&image_ready_sem);
+			        uint8_t *img_buff_ptr = dcmi_get_last_image_ptr();
+					target_color = 0;
+					set_rgb_led(LED2,255,0,0);
+					right_motor_set_speed(-50);
+					left_motor_set_speed(50);
 				}
 
 
@@ -466,15 +537,21 @@ void select_target_color(uint8_t color_id) {
 			 //choisit le bleu et tourne pour le trouver
 			case 2:
 				if(target_color == 1){
-					target_color = 2;
-					set_rgb_led(LED2,0,0,255);
-					right_motor_set_speed(-50);
-					left_motor_set_speed(50);
+					right_motor_set_speed(0);
+					left_motor_set_speed(0);
 					camera_height = 100;
 					pxtocm = PXTOCM_COLOR;
 					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 					po8030_set_awb(0);
 					po8030_set_contrast(55);
+			    	//Capture une image pour réactualiser le buffer et éviter de detecter la ligne noire dès le debut
+			        chBSemWait(&image_ready_sem);
+					uint8_t *img_buff_ptr = dcmi_get_last_image_ptr();
+					target_color = 2;
+					set_rgb_led(LED2,0,0,255);
+					right_motor_set_speed(-50);
+					left_motor_set_speed(50);
+
 				}
 
 			  break;
@@ -510,4 +587,10 @@ void set_camera_height(uint16_t height){
 
 uint16_t get_camera_height(void){
 	return camera_height;
+}
+
+void wait_ms(uint16_t time_ms){
+     for(uint32_t i = 0 ; i < 21000000*time_ms/500 ; i++){
+         __asm__ volatile ("nop");
+     }
 }

@@ -71,39 +71,39 @@ static THD_FUNCTION(Movement, arg) {
 //				chThdSleepMilliseconds(1000);
 //				set_rgb_led(LED8,0,0,0);
 
-				if (get_camera_height()==100){
-//					while (speed_correction < 5){
+//				if (get_camera_height()==100){
+////					while (speed_correction < 5){
+////
+////					}
+////					right_motor_set_speed(- ROTATION_COEFF * speed_correction);
+////					left_motor_set_speed( + ROTATION_COEFF * speed_correction);
+//						float travel_time = get_distance_cm()*2700/10.32;
+////						uint8_t i =0;
+////						while ( i <100){
+////							chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
+////							i++;
+////							chThdSleepMilliseconds(10);
+////
+////						}
+//
+//						set_rgb_led(LED8,0,255,0);
+////						chThdSleepMilliseconds(1000);
+////						set_rgb_led(LED8,0,0,0);
+//
+////						chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
+//						   right_motor_set_speed(800);
+//						   left_motor_set_speed(800);
+//							chThdSleepMilliseconds(travel_time);
+//							right_motor_set_speed(-800);
+//							left_motor_set_speed(800);
+//							chThdSleepMilliseconds(820);
+//						    right_motor_set_speed(800);
+//						    left_motor_set_speed(800);
+//							chThdSleepMilliseconds(travel_time);
+//							set_camera_height(460);
+//							po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 //
 //					}
-//					right_motor_set_speed(- ROTATION_COEFF * speed_correction);
-//					left_motor_set_speed( + ROTATION_COEFF * speed_correction);
-						float travel_time = get_distance_cm()*2700/10.32;
-//						uint8_t i =0;
-//						while ( i <100){
-//							chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
-//							i++;
-//							chThdSleepMilliseconds(10);
-//
-//						}
-
-						set_rgb_led(LED8,0,255,0);
-//						chThdSleepMilliseconds(1000);
-//						set_rgb_led(LED8,0,0,0);
-
-//						chprintf((BaseSequentialStream *)&SD3, "traveltime=%f\n",travel_time);
-						   right_motor_set_speed(800);
-						   left_motor_set_speed(800);
-							chThdSleepMilliseconds(travel_time);
-							right_motor_set_speed(-800);
-							left_motor_set_speed(800);
-							chThdSleepMilliseconds(820);
-						    right_motor_set_speed(800);
-						    left_motor_set_speed(800);
-							chThdSleepMilliseconds(travel_time);
-							set_camera_height(460);
-							po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
-
-					}
 
 				}
 //				else{
@@ -124,7 +124,7 @@ static THD_FUNCTION(Movement, arg) {
 //					   left_motor_set_speed(800);
 //					   chThdSleepMilliseconds(820);
 //				}
-	}
+//	}
 
 
 
@@ -138,7 +138,7 @@ static THD_FUNCTION(Movement, arg) {
 
 			   right_motor_set_speed(-800);
 			   left_motor_set_speed(800);
-			   chThdSleepMilliseconds(820);
+			   chThdSleepMilliseconds(680);
 //				retourne sur ligne
 //			   po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 
@@ -181,9 +181,16 @@ static THD_FUNCTION(Movement, arg) {
 			}
 
     	//100Hz
-    	chThdSleepUntilWindowed(time, time + MS2ST(10));
+    	chThdSleepUntilWindowed(time, time + MS2ST(20));
 
     }
+        else{
+//        	float travel_time = get_distance_cm()*2700/10.32;
+//        	chThdSleepMilliseconds(2*travel_time + 1820);
+        	chThdSleepMilliseconds(12000);
+        }
+    }
+
 }
 
 
