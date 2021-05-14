@@ -21,7 +21,6 @@
 #include <obstacle.h>
 #include<pi_regulator.h>
 
-
 static THD_WORKING_AREA(waMovement, 1024); //mémoire augmentée à cause de panic
 static THD_FUNCTION(Movement, arg) {
 
@@ -41,6 +40,10 @@ static THD_FUNCTION(Movement, arg) {
 
 //    		chprintf((BaseSequentialStream *)&SD3, "dans if temp = 1");
 			if(get_distance_cm() ){
+			//	playMelody(PIRATES_OF_THE_CARIBBEAN,ML_SIMPLE_PLAY,0);
+
+				//waitMelodyHasFinished() ;
+
 
 
 				chprintf((BaseSequentialStream *)&SD3, "jesuisdangetlineposition");

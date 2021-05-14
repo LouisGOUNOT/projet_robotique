@@ -16,6 +16,9 @@
 #include <chprintf.h>
 #include <audio/microphone.h>
 #include <leds.h>
+#include <audio/audio_thread.h>
+#include <audio/play_melody.h>
+
 
 
 #include <audio_processing.h>
@@ -106,6 +109,12 @@ int main(void)
     proximity_start();
 
     obstacle_start();
+
+    dac_power_speaker(true);
+	dac_start();
+
+	playMelodyStart();
+
     //temp tab used to store values in complex_float format
     //needed bx doFFT_c
     static complex_float temp_tab[FFT_SIZE];
