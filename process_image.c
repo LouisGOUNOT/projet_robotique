@@ -10,6 +10,7 @@
 
 #include <process_image.h>
 #include <audio_processing.h>
+#include "memory_protection.h"
 
 
 
@@ -116,13 +117,13 @@ uint16_t extract_line_width(uint8_t *buffer){
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
 
-		chprintf((BaseSequentialStream *)&SD3, "width= %f\n", width);
+//		chprintf((BaseSequentialStream *)&SD3, "width= %f\n", width);
 	}
 
 	//sets a maximum width or returns the measured width
-	chprintf((BaseSequentialStream *)&SD3, "begin= %d\n", begin);
-	chprintf((BaseSequentialStream *)&SD3, "end= %d\n", end);
-	chprintf((BaseSequentialStream *)&SD3, "width= %d\n", width);
+//	chprintf((BaseSequentialStream *)&SD3, "begin= %d\n", begin);
+//	chprintf((BaseSequentialStream *)&SD3, "end= %d\n", end);
+//	chprintf((BaseSequentialStream *)&SD3, "width= %d\n", width);
 	return width;
 
 
@@ -146,11 +147,11 @@ uint16_t extract_line_mean(uint8_t *buffer){
 	do{
 		wrong_line = 0;
 		//search for a begin
-		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
+		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE_COLOR))
 		{
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image with an experimental factor: MEAN_CORRECTION
-			if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < MEAN_CORRECTION*mean)
+			if(buffer[i] > mean && buffer[i+WIDTH_SLOPE_COLOR] < MEAN_CORRECTION*mean)
 		    {
 		        begin = i;
 		        stop = 1;
@@ -158,13 +159,13 @@ uint16_t extract_line_mean(uint8_t *buffer){
 		    i++;
 		}
 		//if a begin was found, search for an end
-		if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE) && begin)
+		if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE_COLOR) && begin)
 		{
 		    stop = 0;
 
 		    while(stop == 0 && i < IMAGE_BUFFER_SIZE)
 		    {
-		        if(buffer[i] > mean && buffer[i-WIDTH_SLOPE] < mean)
+		        if(buffer[i] > mean && buffer[i-WIDTH_SLOPE_COLOR] < mean)
 		        {
 		            end = i;
 		            stop = 1;
@@ -183,7 +184,7 @@ uint16_t extract_line_mean(uint8_t *buffer){
 		}
 
 		//if a line too small has been detected, continues the search
-		if(!line_not_found && (end-begin) < MIN_LINE_WIDTH){
+		if(!line_not_found && (end-begin) < MIN_LINE_WIDTH_COLOR){
 			i = end;
 			begin = 0;
 			end = 0;
@@ -220,13 +221,15 @@ static THD_FUNCTION(CaptureImage, arg) {
     chRegSetThreadName(__FUNCTION__);
     (void)arg;
 
-	//Takes pixels 0 to IMAGE_BUFFER_SIZE of the line 10 + 11 (minimum 2 lines because reasons)
-	po8030_advanced_config(FORMAT_RGB565, 0, camera_height, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+	//Initialise la hauteur pour ligne noire au démarrage
+	po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
 
     while(1){
+//    	Change la hauteur avant de scanner si besoin
+//    	po8030_advanced_config(FORMAT_RGB565, 0, camera_height, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
         //starts a capture
 		dcmi_capture_start();
 		//waits for the capture to be done
@@ -259,6 +262,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//gets the pointer to the array filled with the last image in RGB565    
 
 		img_buff_ptr = dcmi_get_last_image_ptr();
+
+		//Cas ligne noire
 		if ((target_color == 1)&&(camera_height == 460)){
 
 		//Extracts only the red pixels
@@ -270,15 +275,15 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
-		chprintf((BaseSequentialStream *)&SD3, "lineWidth = %d\n", lineWidth);
+//		chprintf((BaseSequentialStream *)&SD3, "lineWidth = %d\n", lineWidth);
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth>80){
 			distance_cm = pxtocm/lineWidth;
-			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
+//			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
 		}
 		else {
-			distance_cm= 0.0;
-			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
+			distance_cm= 0.0f;
+//			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
 
 		}
 
@@ -289,7 +294,9 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//invert the bool
 		send_to_computer = !send_to_computer;
 		}
+		//CAs recehrche coleur
 		else {
+//				chprintf((BaseSequentialStream *)&SD3, "dist_retour= %f\n", dist_retour);
 				compte_tour++;
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
 					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
@@ -300,8 +307,16 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 					image[i/2] = green_temp + blue_temp;
 				}
-
+				if (target_color == 0){
+					if(send_to_computer){
+						//sends to the computer the image
+						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
+					}
+					//invert the bool
+					send_to_computer = !send_to_computer;
+				}
 				redMean = extract_line_mean(image);
+//				chprintf((BaseSequentialStream *)&SD3, "redMean= %d\n", redMean);
 
 				img_buff_ptr = dcmi_get_last_image_ptr();
 
@@ -313,74 +328,234 @@ static THD_FUNCTION(ProcessImage, arg) {
 					image[i/2] = red_temp + green_temp;
 				}
 				blueMean = extract_line_mean(image);
+//				chprintf((BaseSequentialStream *)&SD3, "blueMean= %d\n", blueMean);
 
+				if (target_color == 2){
+					if(send_to_computer){
+						//sends to the computer the image
+						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
+					}
 
+					//invert the bool
+					send_to_computer = !send_to_computer;
+				}
 				//gets lineWidth in pixels
 				lineWidth = temp_end - temp_begin;
-				if(lineWidth>60){
+				if(lineWidth>50){
 					distance_cm = pxtocm/lineWidth;
-				}
-				meanRatio = blueMean/redMean;
 
+				meanRatio = blueMean/redMean;
+				chprintf((BaseSequentialStream *)&SD3, "meanRatio= %f\n", meanRatio);
+				}
+				else{
+					meanRatio = 0;
+				}
+//				//search for a line in the image and gets its width in pixels
+//				lineWidth = extract_line_width(image);
+//				chprintf((BaseSequentialStream *)&SD3, "temp_begin= %d\n", temp_begin);
+//				chprintf((BaseSequentialStream *)&SD3, "temp_end= %d\n", temp_end);
+//				chprintf((BaseSequentialStream *)&SD3, "lineWidth= %d\n", lineWidth);
 
 				// CONDITIONS AVEC ACTIONS SUR LE MOTEUR
 
-				if((blueMean + redMean) > 1){
+				if(((blueMean + redMean) > 1)&&(lineWidth>40)){
+//					chSysLock();
 					// ratio entre 1 et 5 bleu
 					// si trouve bleu quand c'est demandé alors arrete de tourner et éteint la led et moteur
 					// si pas demandé alors reset le compteur de rouge pour éviter les faux positifs
 	//					if((meanRatio < 5.5)&&(meanRatio > 0.5)&&(target_color == 2))
-					if((meanRatio < 5.5)&&(meanRatio > 0.5))
+					if((meanRatio < 3)&&(meanRatio  > 0))
 					{
 						if (target_color == 0){
 							i_red = 0;
 						}
 						else{
 							i_blue++;
-							if (i_blue == 5){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
+							if (((get_line_position() - (IMAGE_BUFFER_SIZE/2))<70)){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
 								set_rgb_led(LED2,0,0,0);
+								set_rgb_led(LED4,0,0,0);
 	//							right_motor_set_speed(0);
 	//							left_motor_set_speed(0);
-								select_target_color(1);
+//								select_target_color(1);
 								pxtocm = PXTOCM_COLOR;
-								camera_height = 100;
+								set_rgb_led(LED8,0,255,0);
+//								chThdSleepMilliseconds(2000);
+								chprintf((BaseSequentialStream *)&SD3, "JE SUIS DANS DETECTION BLEU");
+								// COPIE COLLé DES ACTIONS QUAND TROUVE
+								uint16_t travel_time = distance_cm*2700/10.32;
+								chprintf((BaseSequentialStream *)&SD3, "traveltime =%f\n",travel_time);
+
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+								right_motor_set_speed(800);
+								left_motor_set_speed(800);
+								wait_ms(travel_time);
+								right_motor_set_speed(-800);
+								left_motor_set_speed(800);
+								wait_ms(675);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+								right_motor_set_speed(800);
+								left_motor_set_speed(800);
+								wait_ms(travel_time);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+
+//								set_rgb_led(LED8,0,0,0);
+								select_target_color(1);
 								i_blue = 0;
-								dist_retour = distance_cm;
-								compte_tour = 0;
+//								if(dist_retour == 0){
+//									dist_retour = distance_cm;
+//								}
+								compte_tour = 641;
+								set_rgb_led(LED8,0,0,0);
 							}
 						}
 					}
 					// ratio entre 5-5 et 25 rouge
 					// si trouve rouge quand c'est demandé alors arrete de tourner et éteint la led et moteurs
 	//					else if((meanRatio < 25)&&(meanRatio > 5.5)&&(target_color == 0))
-					else if((meanRatio < 25)&&(meanRatio > 5.5))
+					else if((meanRatio  > 2))
 					{
-						if (target_color == 2){
-							i_blue = 0;
-						}
-						else{
+
+//						if (target_color == 2){
+//							i_blue = 0;
+//						}
+//						else{
 							i_red++;
-							if (i_red == 5){
+//							if ((i_red > 2)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<150)){
+							if (((get_line_position() - (IMAGE_BUFFER_SIZE/2))<70)){
 								set_rgb_led(LED2,0,0,0);
-								select_target_color(1);
+								set_rgb_led(LED4,0,0,0);
+//								select_target_color(1);
 								pxtocm = PXTOCM_COLOR;
 								camera_height = 100;
-								i_red = 0;
-								dist_retour = distance_cm;
-								compte_tour = 0;
-							}
+								set_rgb_led(LED8,0,255,0);
+//								chThdSleepMilliseconds(2000);
+								chprintf((BaseSequentialStream *)&SD3, "JE SUIS DANS DETECTION ROUGE");
+								// COPIE COLLé DES ACTIONS QUAND TROUVE
+								uint16_t travel_time = distance_cm*2700/10.32;
+								chprintf((BaseSequentialStream *)&SD3, "traveltime =%f\n",travel_time);
+
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+								right_motor_set_speed(800);
+								left_motor_set_speed(800);
+								wait_ms(travel_time);
+								right_motor_set_speed(-800);
+								left_motor_set_speed(800);
+								wait_ms(675);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+								right_motor_set_speed(800);
+								left_motor_set_speed(800);
+								wait_ms(travel_time);
+								right_motor_set_speed(0);
+								left_motor_set_speed(0);
+								wait_ms(100);
+//								set_rgb_led(LED8,0,0,0);
+
+								select_target_color(1);
+
+//								if(dist_retour == 0){
+//									dist_retour = distance_cm;
+//								}
+								compte_tour = 641;
+								set_rgb_led(LED8,0,0,0);
+//							}
 						}
 					}
-
+//					chSysUnlock();
 			}
-				//reprend ligne noire si toruve rien apres 1 tour
-				if (compte_tour > 320){
+				//reprend ligne noire si toruve rien apres 1 tour 320 pendant les tests
+				if (compte_tour > 640){
 					compte_tour = 0;
+					set_rgb_led(LED2,0,0,0);
+					set_rgb_led(LED8,0,0,0);
 					select_target_color(1);
+
 
 				}
 		}
     }
+}
+
+
+void process_image_start(void){
+	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO+1, ProcessImage, NULL);
+	chThdCreateStatic(waCaptureImage, sizeof(waCaptureImage), NORMALPRIO+1, CaptureImage, NULL);
+}
+
+void select_target_color(uint8_t color_id) {
+	switch (color_id){
+			//choisit le rouge et tourne pour le trouver
+			case 0:
+				if(target_color == 1){
+					right_motor_set_speed(0);
+					left_motor_set_speed(0);
+					camera_height = 100;
+					pxtocm = PXTOCM_COLOR;
+					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+					po8030_set_awb(0);
+					po8030_set_contrast(55);
+			    	//Capture une image pour réactualiser le buffer et éviter de detecter la ligne noire dès le debut
+			        chBSemWait(&image_ready_sem);
+			        uint8_t *img_buff_ptr = dcmi_get_last_image_ptr();
+					target_color = 0;
+					set_rgb_led(LED2,255,0,0);
+					right_motor_set_speed(-50);
+					left_motor_set_speed(50);
+				}
+
+
+			  break;
+			  // suivi ligne noire
+			case 1:
+				target_color = 1;
+				camera_height = 460;
+				//régule contraste avec cste 0< <255
+				pxtocm = PXTOCM_BLACK_LINE;
+
+
+				//setup la camera
+//				dcmi_capture_stop();
+				po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+//				dcmi_enable_double_buffering();
+//				dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
+//				dcmi_prepare();
+//				dcmi_capture_start();
+				po8030_set_awb(0);
+				po8030_set_contrast(74);
+				set_rgb_led(LED4,255,255,255);
+
+			  break;
+			 //choisit le bleu et tourne pour le trouver
+			case 2:
+				if(target_color == 1){
+					right_motor_set_speed(0);
+					left_motor_set_speed(0);
+					camera_height = 100;
+					pxtocm = PXTOCM_COLOR;
+					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+					po8030_set_awb(0);
+					po8030_set_contrast(55);
+			    	//Capture une image pour réactualiser le buffer et éviter de detecter la ligne noire dès le debut
+			        chBSemWait(&image_ready_sem);
+					uint8_t *img_buff_ptr = dcmi_get_last_image_ptr();
+					target_color = 2;
+					set_rgb_led(LED2,0,0,255);
+					right_motor_set_speed(-50);
+					left_motor_set_speed(50);
+
+				}
+
+			  break;
+		}
 }
 
 uint16_t get_distance_cm(void){
@@ -391,48 +566,6 @@ uint16_t get_line_position(void){
 	return line_position;
 }
 
-void process_image_start(void){
-	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO, ProcessImage, NULL);
-	chThdCreateStatic(waCaptureImage, sizeof(waCaptureImage), NORMALPRIO, CaptureImage, NULL);
-}
-
-void select_target_color(uint8_t color_id) {
-	switch (color_id){
-			//choisit le rouge et tourne pour le trouver
-			case 0:
-				target_color = 0;
-				right_motor_set_speed(-100);
-				left_motor_set_speed(100);
-				camera_height = 100;
-				po8030_set_awb(0);
-				//régule contraste avec cste 0< <255
-				po8030_set_contrast(55);
-				pxtocm = PXTOCM_COLOR;
-
-			  break;
-			  // suivi ligne noire
-			case 1:
-				target_color = 1;
-				camera_height = 460;
-				po8030_set_awb(0);
-				//régule contraste avec cste 0< <255
-				pxtocm = PXTOCM_BLACK_LINE;
-				po8030_set_contrast(74);
-
-			  break;
-			 //choisit le bleu et tourne pour le trouver
-			case 2:
-				target_color = 2;
-				right_motor_set_speed(-100);
-				left_motor_set_speed(100);
-				camera_height = 100;
-				po8030_set_awb(0);
-				//régule contraste avec cste 0< <255
-				po8030_set_contrast(55);
-				pxtocm = PXTOCM_COLOR;
-			  break;
-		}
-}
 
 uint8_t get_target_color(void) {
 	return target_color;
@@ -440,4 +573,24 @@ uint8_t get_target_color(void) {
 
 uint16_t get_dist_retour(void) {
 	return dist_retour;
+}
+
+//void rst_dist_retour(void) {
+//		dist_retour = 0;
+//}
+void set_dist_retour(float dist){
+	dist_retour = dist;
+}
+void set_camera_height(uint16_t height){
+	camera_height=height;
+}
+
+uint16_t get_camera_height(void){
+	return camera_height;
+}
+
+void wait_ms(uint16_t time_ms){
+     for(uint32_t i = 0 ; i < 21000000*time_ms/500 ; i++){
+         __asm__ volatile ("nop");
+     }
 }

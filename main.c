@@ -112,8 +112,8 @@ int main(void)
     //send_tab is used to save the state of the buffer to send (double buffering)
     //to avoid modifications of the buffer while sending it
     static float send_tab[FFT_SIZE];
-	right_motor_set_speed(-100);
-	left_motor_set_speed(100);
+	//right_motor_set_speed(-100);
+	//left_motor_set_speed(100);
 //		//starts the microphones processing thread.
 //		//it calls the callback given in parameter when samples are ready
 		mic_start(&processAudioData);
