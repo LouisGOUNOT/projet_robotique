@@ -56,9 +56,17 @@ extern "C" {
 #define TIME_HALF_TURN			600 // [Milliseconds]
 
 //Camera
-#define MEAN_CORRECTION  		1.0f //experimental value
 #define LOW_POS					460
 #define HIGH_POS				100
+//Masks used as camera filters
+#define MSK_RED1 				0b11111000
+#define	MSK_RED2 				0b00000000
+#define MSK_GREEN1 				0b00000111
+#define	MSK_GREEN2 				0b11000000
+#define MSK_BLUE1 				0b00000000
+#define	MSK_BLUE2 				0b00011111
+#define LINEWIDTH_MODE			0
+#define MEAN_MODE				1
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;
