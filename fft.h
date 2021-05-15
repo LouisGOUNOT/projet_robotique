@@ -1,3 +1,11 @@
+/*
+ * 	fft.h
+ *
+ *  Created on: 15 may 2021
+ *  Author: Clément Albert & Louis Gounot
+ */
+
+
 #ifndef FFT_H
 #define FFT_H
 

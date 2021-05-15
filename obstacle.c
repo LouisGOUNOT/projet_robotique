@@ -1,3 +1,13 @@
+/*
+ * 	obstacle.c
+ *
+ *  Created on: 15 may 2021
+ *  Author: Clément Albert & Louis Gounot
+ *
+ *  return values if there is an obstacle
+ */
+
+
 #include "ch.h"
 #include "hal.h"
 #include <math.h>
@@ -16,18 +26,18 @@ static uint8_t obstacle_detection(void){
 
 
 
-	//linéarise les valeurs renvoyes par les capteurs de proximité
+	//linéarize the values send by the IR sensors
 	for (uint8_t i=0; i<NUMSENSOR;i++){
     	proxi[i]=get_prox(i);
     	distance_capteurs[i]=530/pow(proxi[i],0.98);
     }
 
 
-   	//capteurs trop proches d'un objet
-    	if((distance_capteurs[FRONT_RIGHT]<DIST_OBS_MAX)||(distance_capteurs[FRONT_LEFT]<DIST_OBS_MAX)){
-			return REACHED_FRONT;
-    	}
-    	else return 0;
+   	//epuck too close from an obstacle
+	if((distance_capteurs[FRONT_RIGHT]<DIST_OBS_MAX)||(distance_capteurs[FRONT_LEFT]<DIST_OBS_MAX)){
+		return REACHED_FRONT;
+	}
+	else return 0;
     
 
        
@@ -50,6 +60,7 @@ static THD_FUNCTION(Obstacle, arg) {
         chThdSleepUntilWindowed(time, time + MS2ST(10));
     }
 }
+//send if the epuck is next to an obstacle to the file move.c
  uint8_t obstacle_detected(void){
  	return reached_distance;
  }

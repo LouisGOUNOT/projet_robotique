@@ -1,3 +1,12 @@
+/*
+ * 	pi_regulator.c
+ *
+ *  Created on: 15 may 2021
+ *  Author: Clément Albert & Louis Gounot
+ *
+ *  Initialize the robot and the threads
+ */
+
 #include "ch.h"
 #include "hal.h"
 #include <math.h>
@@ -38,8 +47,6 @@ int16_t pi_regulator(float distance, float goal){
 	}
 
 	speed = KP * error + KI * sum_error;
-	chprintf((BaseSequentialStream *)&SD3, "error =  %d\n", error);
-	chprintf((BaseSequentialStream *)&SD3, "speed =  %d\n", KP * error);
 
     return (int16_t)speed;
 }

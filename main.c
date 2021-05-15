@@ -1,3 +1,12 @@
+/*
+ * main.c
+ *
+ *  Created on: 15 may 2021
+ *  Author: Clément Albert & Louis Gounot
+ *
+ *  Initialize the robot and the threads
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,8 +25,6 @@
 #include <chprintf.h>
 #include <audio/microphone.h>
 #include <leds.h>
-
-
 #include <audio_processing.h>
 #include <fft.h>
 #include <communications.h>

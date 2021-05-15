@@ -1,3 +1,12 @@
+/*
+ * 	communications.h
+ *
+ *  Created on: 15 may 2021
+ *  Author: Clément Albert & Louis Gounot
+ *
+ *
+ */
+
 #ifndef COMMUNICATIONS_H
 #define COMMUNICATIONS_H
 

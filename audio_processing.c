@@ -1,3 +1,12 @@
+/*
+ * 	audi_processing.c
+ *
+ *  Created on: 15 may 2021
+ *  Author: Clément Albert & Louis Gounot
+ *
+ */
+
+
 #include "ch.h"
 #include "hal.h"
 #include <main.h>

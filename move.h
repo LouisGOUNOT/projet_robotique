@@ -1,8 +1,8 @@
 /*
  * move.h
  *
- *  Created on: 10 mai 2021
- *      Author: clema
+ *  Created on: 15 mai 2021
+ *      Author: Clément Albert & Louis Gounot
  */
 
 #ifndef MOVE_H_

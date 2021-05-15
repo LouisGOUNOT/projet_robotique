@@ -1,3 +1,13 @@
+/*
+ * 	audio_processing.h
+ *
+ *  Created on: 15 may 2021
+ *  Author: Clément Albert & Louis Gounot
+ *
+ *
+ */
+
+
 #ifndef AUDIO_PROCESSING_H
 #define AUDIO_PROCESSING_H
 

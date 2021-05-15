@@ -1,8 +1,10 @@
 /*
- * move.c
+ * 	move.c
  *
- *  Created on: 10 mai 2021
- *      Author: clema
+ *  Created on: 15 may 2021
+ *  Author: Clément Albert & Louis Gounot
+ *
+ *  movement of the robot depending on the situation
  */
 
 
@@ -24,7 +26,8 @@
 #include<pi_regulator.h>
 
 
-static THD_WORKING_AREA(waMovement, 1024); //mémoire augmentée à cause de panic
+
+static THD_WORKING_AREA(waMovement, 1024);
 static THD_FUNCTION(Movement, arg) {
 
     chRegSetThreadName(__FUNCTION__);
@@ -61,27 +64,24 @@ static THD_FUNCTION(Movement, arg) {
 
 			}
 
-// Retour apr�s detection couleur
+// Retour apres detection couleur
+			//half turn if epuck detects obstacle
 			if((!get_distance_cm()) && obstacle_detected()&&(get_camera_height()==460)){
 
-//demi tour
 				set_rgb_led(LED8,0,0,255);
-
-			   right_motor_set_speed(-800);
-			   left_motor_set_speed(800);
-			   chThdSleepMilliseconds(680);
+				right_motor_set_speed(-800);
+				left_motor_set_speed(800);
+				chThdSleepMilliseconds(680);
 
 			}
 
-			//si pas de ligne et pas d'obstacle le robot ne bouge pas;
+			//if epuck detects no line and no obstacle, turns while he doesn't detect a line ;
 			if((!get_distance_cm()) && (!obstacle_detected())&&(get_camera_height()==460)){
 
 				set_rgb_led(LED8,0,255,255);
 
 				po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 				set_camera_height(460);
-
-				set_dist_retour(1.0f);
 				right_motor_set_speed(-200);
 				left_motor_set_speed(200);
 			}

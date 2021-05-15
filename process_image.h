@@ -1,3 +1,12 @@
+/*
+ * 	process_image.c
+ *
+ *  Created on: 15 may 2021
+ *  Author: Clément Albert & Louis Gounot
+ *
+ *  Capture the image and analyze it
+ */
+
 #ifndef PROCESS_IMAGE_H
 #define PROCESS_IMAGE_H
 

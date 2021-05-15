@@ -1,3 +1,13 @@
+/*
+ * 	process_image.c
+ *
+ *  Created on: 15 may 2021
+ *  Author: ClÃ©ment Albert & Louis Gounot
+ *
+ *  Capture the image and analyze it
+ */
+
+
 #include "ch.h"
 #include "hal.h"
 #include <chprintf.h>
@@ -221,7 +231,7 @@ static THD_FUNCTION(CaptureImage, arg) {
     chRegSetThreadName(__FUNCTION__);
     (void)arg;
 
-	//Initialise la hauteur pour ligne noire au démarrage
+	//Initialise la hauteur pour ligne noire au dï¿½marrage
 	po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
@@ -326,8 +336,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 				if(((blueMean + redMean) > 1)&&(lineWidth>40)){
 //					chSysLock();
 					// ratio entre 1 et 5 bleu
-					// si trouve bleu quand c'est demandé alors arrete de tourner et éteint la led et moteur
-					// si pas demandé alors reset le compteur de rouge pour éviter les faux positifs
+					// si trouve bleu quand c'est demandï¿½ alors arrete de tourner et ï¿½teint la led et moteur
+					// si pas demandï¿½ alors reset le compteur de rouge pour ï¿½viter les faux positifs
 					if((meanRatio < 3)&&(meanRatio  > 0))
 					{
 						if (target_color == 0){
@@ -335,13 +345,13 @@ static THD_FUNCTION(ProcessImage, arg) {
 						}
 						else{
 							i_blue++;
-							if (((get_line_position() - (IMAGE_BUFFER_SIZE/2))<70)){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
+							if (((get_line_position() - (IMAGE_BUFFER_SIZE/2))<70)){ //5 est une valeur experimentale a peaufiner pour ï¿½viter les erreurs
 								set_rgb_led(LED2,0,0,0);
 								set_rgb_led(LED4,0,0,0);
 								pxtocm = PXTOCM_COLOR;
 								set_rgb_led(LED8,0,255,0);
 								chprintf((BaseSequentialStream *)&SD3, "JE SUIS DANS DETECTION BLEU");
-								// COPIE COLLé DES ACTIONS QUAND TROUVE
+								// COPIE COLLï¿½ DES ACTIONS QUAND TROUVE
 								uint16_t travel_time = distance_cm*2700/10.32;
 								chprintf((BaseSequentialStream *)&SD3, "traveltime =%f\n",travel_time);
 
@@ -376,7 +386,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 						}
 					}
 					// ratio entre 5-5 et 25 rouge
-					// si trouve rouge quand c'est demandé alors arrete de tourner et éteint la led et moteurs
+					// si trouve rouge quand c'est demandï¿½ alors arrete de tourner et ï¿½teint la led et moteurs
 					else if((meanRatio  > 2))
 					{
 							i_red++;
@@ -389,7 +399,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 								set_rgb_led(LED8,0,255,0);
 //								chThdSleepMilliseconds(2000);
 								chprintf((BaseSequentialStream *)&SD3, "JE SUIS DANS DETECTION ROUGE");
-								// COPIE COLLé DES ACTIONS QUAND TROUVE
+								// COPIE COLLï¿½ DES ACTIONS QUAND TROUVE
 								uint16_t travel_time = distance_cm*2700/10.32;
 								chprintf((BaseSequentialStream *)&SD3, "traveltime =%f\n",travel_time);
 
@@ -450,7 +460,7 @@ void select_target_color(uint8_t color_id) {
 					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 					po8030_set_awb(0);
 					po8030_set_contrast(55);
-			    	//Capture une image pour réactualiser le buffer et éviter de detecter la ligne noire dès le debut
+			    	//Capture une image pour rï¿½actualiser le buffer et ï¿½viter de detecter la ligne noire dï¿½s le debut
 			        chBSemWait(&image_ready_sem);
 			        uint8_t *img_buff_ptr = dcmi_get_last_image_ptr();
 					target_color = 0;
@@ -465,7 +475,7 @@ void select_target_color(uint8_t color_id) {
 			case 1:
 				target_color = 1;
 				camera_height = 460;
-				//régule contraste avec cste 0< <255
+				//rï¿½gule contraste avec cste 0< <255
 				pxtocm = PXTOCM_BLACK_LINE;
 
 
@@ -491,7 +501,7 @@ void select_target_color(uint8_t color_id) {
 					po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 					po8030_set_awb(0);
 					po8030_set_contrast(55);
-			    	//Capture une image pour réactualiser le buffer et éviter de detecter la ligne noire dès le debut
+			    	//Capture une image pour rï¿½actualiser le buffer et ï¿½viter de detecter la ligne noire dï¿½s le debut
 			        chBSemWait(&image_ready_sem);
 					uint8_t *img_buff_ptr = dcmi_get_last_image_ptr();
 					target_color = 2;
