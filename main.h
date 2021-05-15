@@ -28,6 +28,10 @@ extern "C" {
 #define KI 						3.5f	//must not be zero
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 
+#define TRAVELTIMECOEFF 		2700/10.32	//adjusts travel_time, experimental value
+#define COMPTE_TOUR_MAX 		640	//experimental value
+
+
 #define NUMSENSOR               8
 #define REACHED_FRONT           1
 #define REACHED_FRONT45         2
