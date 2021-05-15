@@ -1,8 +1,8 @@
 /*
  * move.c
  *
- *  Created on: 10 mai 2021
- *      Author: clema
+ *  Created on: 15 mai 2021
+ *      Author: CLÈment Albert & Louis Gounot
  */
 
 
@@ -23,6 +23,11 @@
 #include <obstacle.h>
 #include<pi_regulator.h>
 
+void demi_tour(void){
+	   right_motor_set_speed(-SPEED_ROT);
+	   left_motor_set_speed(SPEED_ROT);
+	   chThdSleepMilliseconds(TIME_HALF_TURN);
+}
 
 static THD_WORKING_AREA(waMovement, 1024); //m√©moire augment√©e √† cause de panic
 static THD_FUNCTION(Movement, arg) {
@@ -54,47 +59,35 @@ static THD_FUNCTION(Movement, arg) {
 				}
 
 				//applies the speed from the PI regulator and the correction for the rotation
-				right_motor_set_speed(0.27*speed - ROTATION_COEFF * speed_correction);
-				left_motor_set_speed(0.27*speed + ROTATION_COEFF * speed_correction);
+				right_motor_set_speed(SPEED_COEFF*speed - ROTATION_COEFF * speed_correction);
+				left_motor_set_speed(SPEED_COEFF*speed + ROTATION_COEFF * speed_correction);
 
 				set_rgb_led(LED8,255,0,0);
-
 			}
 
 // Retour aprËs detection couleur
-			if((!get_distance_cm()) && obstacle_detected()&&(get_camera_height()==460)){
-
-//demi tour
+			if((!get_distance_cm()) && obstacle_detected()&&(get_camera_height()==LOW_POS)){
 				set_rgb_led(LED8,0,0,255);
-
-			   right_motor_set_speed(-800);
-			   left_motor_set_speed(800);
-			   chThdSleepMilliseconds(680);
-
+				demi_tour();
 			}
 
 			//si pas de ligne et pas d'obstacle le robot ne bouge pas;
-			if((!get_distance_cm()) && (!obstacle_detected())&&(get_camera_height()==460)){
-
+			if((!get_distance_cm()) && (!obstacle_detected())&&(get_camera_height()==LOW_POS)){
 				set_rgb_led(LED8,0,255,255);
-
-				po8030_advanced_config(FORMAT_RGB565, 0, 460, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
-				set_camera_height(460);
-
-				set_dist_retour(1.0f);
-				right_motor_set_speed(-200);
-				left_motor_set_speed(200);
+				po8030_advanced_config(FORMAT_RGB565, 0, LOW_POS, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+				set_camera_height(LOW_POS);
+			//	set_dist_retour(1.0f);
+				right_motor_set_speed(-SPEED_ROT/4);
+				left_motor_set_speed(SPEED_ROT/4);
 			}
 
     	//100Hz
     	chThdSleepUntilWindowed(time, time + MS2ST(20));
-
-    }
+    	}
         else{
         	chThdSleepMilliseconds(6000);
         }
     }
-
 }
 
 void movement_start(void){

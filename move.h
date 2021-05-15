@@ -8,6 +8,7 @@
 #ifndef MOVE_H_
 #define MOVE_H_
 void movement_start(void);
+void demi_tour(void);
 
 
 #endif /* MOVE_H_ */

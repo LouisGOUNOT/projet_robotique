@@ -52,11 +52,13 @@ extern "C" {
 
 #define VITESSENULLE			0
 #define ROTATIONNULLE			0
-#define VIT_ROT					800
-#define TEMPS_DEMITOUR			600 // [Milliseconds]
+#define SPEED_ROT					800
+#define TIME_HALF_TURN			600 // [Milliseconds]
 
 //Camera
 #define MEAN_CORRECTION  		1.0f //experimental value
+#define LOW_POS					460
+#define HIGH_POS				100
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;

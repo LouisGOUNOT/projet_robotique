@@ -40,8 +40,8 @@ static uint8_t compteur_bleu = 0 ;
 
 #define FREQ_RED_L		(FREQ_RED-1)
 #define FREQ_RED_H		(FREQ_RED+1)
-#define FREQ_GREEN_L			(FREQ_GREEN-5)
-#define FREQ_GREEN_H			(FREQ_GREEN+5)
+#define FREQ_GREEN_L	(FREQ_GREEN-5)
+#define FREQ_GREEN_H	(FREQ_GREEN+5)
 #define FREQ_BLUE_L		(FREQ_BLUE-1)
 #define FREQ_BLUE_H		(FREQ_BLUE+1)
 
