@@ -24,7 +24,7 @@
 #include <audio_processing.h>
 #include <fft.h>
 #include <communications.h>
-//#include <arm_math.h>
+#include <arm_math.h>
 #include <pi_regulator.h>
 #include <process_image.h>
 #include <obstacle.h>
