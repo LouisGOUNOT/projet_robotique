@@ -16,6 +16,9 @@
 #include <chprintf.h>
 #include <audio/microphone.h>
 #include <leds.h>
+#include <audio/audio_thread.h>
+#include <audio/play_melody.h>
+
 
 
 #include <audio_processing.h>
@@ -80,6 +83,14 @@ int main(void)
     //start the threads for the detector of proximity
     proximity_start();
     obstacle_start();
+
+
+    //AUDIO
+    	// Powers ON the alimentation of the speaker
+    	dac_power_speaker(true);
+    	dac_start();
+    	//creates the Melody thread
+    	playMelodyStart();
 
     //temp tab used to store values in complex_float format
     //needed bx doFFT_c

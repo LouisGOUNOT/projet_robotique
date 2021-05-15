@@ -7,10 +7,13 @@
 #include <camera/po8030.h>
 #include <motors.h>
 #include <leds.h>
+#include "memory_protection.h"
+#include <audio/audio_thread.h>
+#include <audio/play_melody.h>
 
 #include <process_image.h>
 #include <audio_processing.h>
-#include "memory_protection.h"
+
 
 
 static float distance_cm = 0.0f;
@@ -29,14 +32,20 @@ static uint16_t camera_height = LOW_POS;
 static float pxtocm = PXTOCM_BLACK_LINE;
 static uint16_t compte_tour = 0;
 
+
+//music detected color
+static const uint16_t color_melody[] = {NOTE_E4, NOTE_F4, NOTE_G4, NOTE_A4,};
+
+static const float color_tempo[] = {10, 10, 10, 10, 10, 10,10, 20, 40, 20, 5,};
+
+static const melody_t color={
+	.notes = color_melody,
+	.tempo = color_tempo,
+	.length = sizeof(color_melody)/sizeof(uint16_t),
+};
+
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
-
-void stop_100_ms(void){
-	right_motor_set_speed(0);
-	left_motor_set_speed(0);
-	wait_ms(100);
-}
 
 
 void wait_ms(uint16_t time_ms){
@@ -44,6 +53,13 @@ void wait_ms(uint16_t time_ms){
          __asm__ volatile ("nop");
      }
 }
+
+void stop_100_ms(void){
+	right_motor_set_speed(0);
+	left_motor_set_speed(0);
+	wait_ms(100);
+}
+
 
 //Goes to the target then goes back to the black line
 void go_to_target(void){
@@ -299,6 +315,9 @@ static THD_FUNCTION(ProcessImage, arg) {
 							i_blue++;
 						}
 						if (i_blue>2){
+							stop_100_ms();
+							playMelody(EXTERNAL_SONG, ML_SIMPLE_PLAY, &color);
+							waitMelodyHasFinished();
 							go_to_target();
 							compte_tour = COMPTE_TOUR_MAX + 1;
 						}
@@ -312,8 +331,11 @@ static THD_FUNCTION(ProcessImage, arg) {
 							i_red++;
 						}
 						if (i_red>2){
-								go_to_target();
-								compte_tour = COMPTE_TOUR_MAX + 1;
+							stop_100_ms();
+							playMelody(EXTERNAL_SONG, ML_SIMPLE_PLAY, &color);
+							waitMelodyHasFinished();
+							go_to_target();
+							compte_tour = COMPTE_TOUR_MAX + 1;
 						}
 					}
 			}
@@ -349,7 +371,7 @@ void select_target_color(uint8_t color_id) {
 				}
 			  break;
 
-			  // target 1 = black line detection
+			 // target 1 = black line detection
 			case 1:
 				target_color = 1;
 				camera_height = LOW_POS;

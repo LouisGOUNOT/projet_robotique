@@ -1,8 +1,10 @@
 /*
  * move.c
  *
- *  Created on: 15 mai 2021
- *      Author: CLément Albert & Louis Gounot
+ * Created on: 15 mai 2021
+ * Author: CLément Albert & Louis Gounot
+ *
+ *
  */
 
 
@@ -107,7 +109,6 @@ static THD_FUNCTION(Movement, arg) {
 				set_rgb_led(LED8,0,255,255);
 				po8030_advanced_config(FORMAT_RGB565, 0, LOW_POS, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 				set_camera_height(LOW_POS);
-			//	set_dist_retour(1.0f);
 				right_motor_set_speed(-SPEED_ROT/4);
 				left_motor_set_speed(SPEED_ROT/4);
 			}
