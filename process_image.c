@@ -229,7 +229,6 @@ static THD_FUNCTION(CaptureImage, arg) {
 
     while(1){
 //    	Change la hauteur avant de scanner si besoin
-//    	po8030_advanced_config(FORMAT_RGB565, 0, camera_height, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
         //starts a capture
 		dcmi_capture_start();
 		//waits for the capture to be done
@@ -275,28 +274,17 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
-//		chprintf((BaseSequentialStream *)&SD3, "lineWidth = %d\n", lineWidth);
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth>80){
 			distance_cm = pxtocm/lineWidth;
-//			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
 		}
 		else {
 			distance_cm= 0.0f;
-//			chprintf((BaseSequentialStream *)&SD3, "distance = %f\n", distance_cm);
-
 		}
 
-		if(send_to_computer){
-			//sends to the computer the image
-			SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
-		}
-		//invert the bool
-		send_to_computer = !send_to_computer;
 		}
 		//CAs recehrche coleur
 		else {
-//				chprintf((BaseSequentialStream *)&SD3, "dist_retour= %f\n", dist_retour);
 				compte_tour++;
 				for(uint16_t i = 0; i<IMAGE_BUFFER_SIZE*2; i++){
 					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
@@ -307,16 +295,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 					image[i/2] = green_temp + blue_temp;
 				}
-				if (target_color == 0){
-					if(send_to_computer){
-						//sends to the computer the image
-						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
-					}
-					//invert the bool
-					send_to_computer = !send_to_computer;
-				}
+
 				redMean = extract_line_mean(image);
-//				chprintf((BaseSequentialStream *)&SD3, "redMean= %d\n", redMean);
 
 				img_buff_ptr = dcmi_get_last_image_ptr();
 
@@ -328,17 +308,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 					image[i/2] = red_temp + green_temp;
 				}
 				blueMean = extract_line_mean(image);
-//				chprintf((BaseSequentialStream *)&SD3, "blueMean= %d\n", blueMean);
 
-				if (target_color == 2){
-					if(send_to_computer){
-						//sends to the computer the image
-						SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
-					}
-
-					//invert the bool
-					send_to_computer = !send_to_computer;
-				}
 				//gets lineWidth in pixels
 				lineWidth = temp_end - temp_begin;
 				if(lineWidth>50){
@@ -350,11 +320,6 @@ static THD_FUNCTION(ProcessImage, arg) {
 				else{
 					meanRatio = 0;
 				}
-//				//search for a line in the image and gets its width in pixels
-//				lineWidth = extract_line_width(image);
-//				chprintf((BaseSequentialStream *)&SD3, "temp_begin= %d\n", temp_begin);
-//				chprintf((BaseSequentialStream *)&SD3, "temp_end= %d\n", temp_end);
-//				chprintf((BaseSequentialStream *)&SD3, "lineWidth= %d\n", lineWidth);
 
 				// CONDITIONS AVEC ACTIONS SUR LE MOTEUR
 
@@ -363,7 +328,6 @@ static THD_FUNCTION(ProcessImage, arg) {
 					// ratio entre 1 et 5 bleu
 					// si trouve bleu quand c'est demandé alors arrete de tourner et éteint la led et moteur
 					// si pas demandé alors reset le compteur de rouge pour éviter les faux positifs
-	//					if((meanRatio < 5.5)&&(meanRatio > 0.5)&&(target_color == 2))
 					if((meanRatio < 3)&&(meanRatio  > 0))
 					{
 						if (target_color == 0){
@@ -374,12 +338,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 							if (((get_line_position() - (IMAGE_BUFFER_SIZE/2))<70)){ //5 est une valeur experimentale a peaufiner pour éviter les erreurs
 								set_rgb_led(LED2,0,0,0);
 								set_rgb_led(LED4,0,0,0);
-	//							right_motor_set_speed(0);
-	//							left_motor_set_speed(0);
-//								select_target_color(1);
 								pxtocm = PXTOCM_COLOR;
 								set_rgb_led(LED8,0,255,0);
-//								chThdSleepMilliseconds(2000);
 								chprintf((BaseSequentialStream *)&SD3, "JE SUIS DANS DETECTION BLEU");
 								// COPIE COLLé DES ACTIONS QUAND TROUVE
 								uint16_t travel_time = distance_cm*2700/10.32;
@@ -417,16 +377,9 @@ static THD_FUNCTION(ProcessImage, arg) {
 					}
 					// ratio entre 5-5 et 25 rouge
 					// si trouve rouge quand c'est demandé alors arrete de tourner et éteint la led et moteurs
-	//					else if((meanRatio < 25)&&(meanRatio > 5.5)&&(target_color == 0))
 					else if((meanRatio  > 2))
 					{
-
-//						if (target_color == 2){
-//							i_blue = 0;
-//						}
-//						else{
 							i_red++;
-//							if ((i_red > 2)&&((get_line_position() - (IMAGE_BUFFER_SIZE/2))<150)){
 							if (((get_line_position() - (IMAGE_BUFFER_SIZE/2))<70)){
 								set_rgb_led(LED2,0,0,0);
 								set_rgb_led(LED4,0,0,0);
@@ -458,19 +411,13 @@ static THD_FUNCTION(ProcessImage, arg) {
 								right_motor_set_speed(0);
 								left_motor_set_speed(0);
 								wait_ms(100);
-//								set_rgb_led(LED8,0,0,0);
 
 								select_target_color(1);
 
-//								if(dist_retour == 0){
-//									dist_retour = distance_cm;
-//								}
 								compte_tour = 641;
 								set_rgb_led(LED8,0,0,0);
-//							}
 						}
 					}
-//					chSysUnlock();
 			}
 				//reprend ligne noire si toruve rien apres 1 tour 320 pendant les tests
 				if (compte_tour > 640){

@@ -49,28 +49,10 @@ static void serial_start(void)
     sdStart(&SD3, &ser_cfg); // UART3.
 }
 
-//uncomment to send the FFTs results from the real microphones
+//send the FFTs results from the real microphones
 #define SEND_FROM_MIC
 
-//uncomment to use double buffering to send the FFT to the computer
-//#define DOUBLE_BUFFERING
 
-
-//static void timer12_start(void){
-//    //General Purpose Timer configuration
-//    //timer 12 is a 16 bit timer so we can measure time
-//    //to about 65ms with a 1Mhz counter
-//    static const GPTConfig gpt12cfg = {
-//        1000000,        /* 1MHz timer clock in order to measure uS.*/
-//        NULL,           /* Timer callback.*/
-//        0,
-//        0
-//    };
-//
-//    gptStart(&GPTD12, &gpt12cfg);
-//    //let the timer count to max value
-//    gptStartContinuous(&GPTD12, 0xFFFF);
-//}
 
 int main(void)
 {
@@ -91,12 +73,6 @@ int main(void)
     //starts the camera
     dcmi_start();
     po8030_start();
-	//enable auto white balance
-//	po8030_set_awb(0);
-//	//régule contraste avec cste 0< <255
-//	po8030_set_contrast(55);
-//    //starts timer 12
-//    timer12_start();
     //inits the motors
     motors_init();
     //stars the threads for the pi regulator and the processing of the image
@@ -112,8 +88,7 @@ int main(void)
     //send_tab is used to save the state of the buffer to send (double buffering)
     //to avoid modifications of the buffer while sending it
     static float send_tab[FFT_SIZE];
-	//right_motor_set_speed(-100);
-	//left_motor_set_speed(100);
+
 //		//starts the microphones processing thread.
 //		//it calls the callback given in parameter when samples are ready
 		mic_start(&processAudioData);

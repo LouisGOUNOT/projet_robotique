@@ -26,11 +26,9 @@ static float micBack_cmplx_input[2 * FFT_SIZE];
 //Arrays containing the computed magnitude of the complex numbers
 static float micLeft_output[FFT_SIZE];
 static float micRight_output[FFT_SIZE];
-static float micFront_output[FFT_SIZE];
 static float micBack_output[FFT_SIZE];
 static uint8_t compteur_rouge = 0 ;
 static uint8_t compteur_bleu = 0 ;
-static uint8_t couleur_entendue = 1;
 
 #define MIN_VALUE_THRESHOLD	10000
 
@@ -74,7 +72,6 @@ void sound_remote(float* data){
 		}
 		if (compteur_rouge > 20){
 			compteur_rouge = 0;
-//			set_rgb_led(LED2,255,0,0);
 			select_target_color(0);
 		}
 
@@ -83,7 +80,6 @@ void sound_remote(float* data){
 	else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
 		compteur_rouge = 0;
 		compteur_bleu = 0;
-//		set_rgb_led(LED2,0,0,0);
 	}
 	//Target blue
 	else if(max_norm_index >= FREQ_BLUE_L && max_norm_index <= FREQ_BLUE_H){
@@ -95,7 +91,6 @@ void sound_remote(float* data){
 		}
 		if (compteur_bleu > 20){
 			compteur_bleu = 0;
-//			set_rgb_led(LED2,0,0,255);
 			select_target_color(2);
 		}
 
@@ -158,7 +153,6 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 
 		doFFT_optimized(FFT_SIZE, micRight_cmplx_input);
 		doFFT_optimized(FFT_SIZE, micLeft_cmplx_input);
-		doFFT_optimized(FFT_SIZE, micFront_cmplx_input);
 		doFFT_optimized(FFT_SIZE, micBack_cmplx_input);
 
 		/*	Magnitude processing
@@ -170,7 +164,6 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		*/
 		arm_cmplx_mag_f32(micRight_cmplx_input, micRight_output, FFT_SIZE);
 		arm_cmplx_mag_f32(micLeft_cmplx_input, micLeft_output, FFT_SIZE);
-//		arm_cmplx_mag_f32(micFront_cmplx_input, micFront_output, FFT_SIZE);
 		arm_cmplx_mag_f32(micBack_cmplx_input, micBack_output, FFT_SIZE);
 
 		//sends only one FFT result over 10 for 1 mic to not flood the computer
@@ -198,9 +191,6 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	else if (name == RIGHT_CMPLX_INPUT){
 		return micRight_cmplx_input;
 	}
-//	else if (name == FRONT_CMPLX_INPUT){
-//		return micFront_cmplx_input;
-//	}
 	else if (name == BACK_CMPLX_INPUT){
 		return micBack_cmplx_input;
 	}
@@ -210,9 +200,6 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	else if (name == RIGHT_OUTPUT){
 		return micRight_output;
 	}
-//	else if (name == FRONT_OUTPUT){
-//		return micFront_output;
-//	}
 	else if (name == BACK_OUTPUT){
 		return micBack_output;
 	}
