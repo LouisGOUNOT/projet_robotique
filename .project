@@ -28,12 +28,12 @@
 		<link>
 			<name>e-puck2_main-processor</name>
 			<type>2</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/e-puck2_main-processor</locationURI>
+			<location>/Users/louisgounot/Desktop/robotique/TP/lib/e-puck2_main-processor</location>
 		</link>
 		<link>
 			<name>lib</name>
 			<type>2</type>
-			<location>C:/Users/clema/Desktop/Robotique/lib</location>
+			<location>/Applications/Eclipse_e-puck2.app/Contents/Eclipse_e-puck2/eclipse.app/Contents/MacOS/C::/Users/clema/Desktop/Robotique/lib</location>
 		</link>
 	</linkedResources>
 </projectDescription>

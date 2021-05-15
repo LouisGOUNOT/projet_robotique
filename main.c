@@ -24,11 +24,30 @@
 #include <audio_processing.h>
 #include <fft.h>
 #include <communications.h>
-#include <arm_math.h>
+//#include <arm_math.h>
 #include <pi_regulator.h>
 #include <process_image.h>
 #include <obstacle.h>
 #include <move.h>
+static const uint16_t couleur_melody[] = {
+  NOTE_E4, NOTE_F4, NOTE_G4, NOTE_A4,
+
+};
+
+//Paso doble tempo
+static const float couleur_tempo[] = {
+  10, 10, 10, 10, 10, 10,
+  10, 20, 40, 20, 5,
+};
+
+static const melody_t couleur_doble={
+		//PASO_DOBLE
+
+		  .notes = couleur_melody,
+		  .tempo = couleur_tempo,
+		  .length = sizeof(couleur_melody)/sizeof(uint16_t),
+};
+
 
 void SendUint8ToComputer(uint8_t* data, uint16_t size)
 {
@@ -74,6 +93,9 @@ static void serial_start(void)
 //    //let the timer count to max value
 //    gptStartContinuous(&GPTD12, 0xFFFF);
 //}
+//PASO_DOBLE SOUND
+//En er Mundo - Paso Doble
+
 
 int main(void)
 {
@@ -96,7 +118,7 @@ int main(void)
     po8030_start();
 	//enable auto white balance
 //	po8030_set_awb(0);
-//	//régule contraste avec cste 0< <255
+//	//rï¿½gule contraste avec cste 0< <255
 //	po8030_set_contrast(55);
 //    //starts timer 12
 //    timer12_start();
