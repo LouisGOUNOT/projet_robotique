@@ -22,17 +22,16 @@
 #include <fft.h>
 #include <communications.h>
 #include <arm_math.h>
-#include <pi_regulator.h>
 #include <process_image.h>
 #include <obstacle.h>
 #include <move.h>
 
-void SendUint8ToComputer(uint8_t* data, uint16_t size)
-{
-    chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)"START", 5);
-    chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)&size, sizeof(uint16_t));
-    chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)data, size);
-}
+//void SendUint8ToComputer(uint8_t* data, uint16_t size)
+//{
+//    chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)"START", 5);
+//    chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)&size, sizeof(uint16_t));
+//    chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)data, size);
+//}
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
 CONDVAR_DECL(bus_condvar);
@@ -76,12 +75,12 @@ int main(void)
     //inits the motors
     motors_init();
     //stars the threads for the pi regulator and the processing of the image
-//    pi_regulator_start();
     process_image_start();
+
     //start the threads for the detector of proximity
     proximity_start();
-
     obstacle_start();
+
     //temp tab used to store values in complex_float format
     //needed bx doFFT_c
     static complex_float temp_tab[FFT_SIZE];

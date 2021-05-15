@@ -18,7 +18,7 @@ extern "C" {
 #define MIN_LINE_WIDTH_COLOR	40 // 40 avant chez clement peut ne pas marcher, 60 chez louis
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			2
-#define SPEED_COEFF				0.50f
+#define SPEED_COEFF				0.27f
 #define PXTOCM_BLACK_LINE		1200.0f //experimental value
 #define PXTOCM_COLOR			700.0f //experimental value
 #define GOAL_DISTANCE 			4.0f
@@ -28,7 +28,7 @@ extern "C" {
 #define KI 						3.5f	//must not be zero
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 
-#define TRAVELTIMECOEFF 		2700/10.32	//adjusts travel_time, experimental value
+#define TRAVELTIMECOEFF 		2500/10.32	//adjusts travel_time, experimental value
 #define COMPTE_TOUR_MAX 		640	//experimental value
 
 
@@ -65,7 +65,7 @@ extern messagebus_t bus;
 
 extern parameter_namespace_t parameter_root;
 
-void SendUint8ToComputer(uint8_t* data, uint16_t size);
+//void SendUint8ToComputer(uint8_t* data, uint16_t size);
 
 #ifdef __cplusplus
 }
