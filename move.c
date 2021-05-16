@@ -2,18 +2,16 @@
  * move.c
  *
  * Created on: 15 mai 2021
- * Author: CLément Albert & Louis Gounot
+ * Author: Clement Albert & Louis Gounot
  *
- *
+ * follow the black line and movement if obstacle
  */
-
 
 #include "ch.h"
 #include "hal.h"
 #include <math.h>
 #include <usbcfg.h>
 #include <chprintf.h>
-//#include "sensors/VL53L0X/VL53L0X.h"
 #include <camera/po8030.h>
 #include <leds.h>
 
@@ -34,9 +32,9 @@ int16_t pi_regulator(float distance, float goal){
 
 	error = distance - goal;
 
-	//disables the PI regulator if the error is to small
-	//this avoids to always move as we cannot exactly be where we want and
-	//the camera is a bit noisy
+	/* disables the PI regulator if the error is to small
+	this avoids to always move as we cannot exactly be where we want and
+	the camera is a bit noisy */
 	if(fabs(error) < ERROR_THRESHOLD){
 		return 0;
 	}
@@ -46,7 +44,8 @@ int16_t pi_regulator(float distance, float goal){
 	//we set a maximum and a minimum for the sum to avoid an uncontrolled growth
 	if(sum_error > MAX_SUM_ERROR){
 		sum_error = MAX_SUM_ERROR;
-	}else if(sum_error < -MAX_SUM_ERROR){
+	}
+	else if(sum_error < -MAX_SUM_ERROR){
 		sum_error = -MAX_SUM_ERROR;
 	}
 
@@ -62,7 +61,7 @@ void demi_tour(void){
 	   chThdSleepMilliseconds(TIME_HALF_TURN);
 }
 
-static THD_WORKING_AREA(waMovement, 1024); //mÃ©moire augmentÃ©e Ã  cause de panic
+static THD_WORKING_AREA(waMovement, 1024);
 static THD_FUNCTION(Movement, arg) {
 
     chRegSetThreadName(__FUNCTION__);
@@ -84,7 +83,7 @@ static THD_FUNCTION(Movement, arg) {
 				//distance_cm is modified by the image processing thread
 				speed = pi_regulator(get_distance_cm(), GOAL_DISTANCE);
 				//computes a correction factor to let the robot rotate to be in front of the line
-				speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2));
+				speed_correction = (get_line_position()-(IMAGE_BUFFER_SIZE/2));
 
 				//if the line is nearly in front of the camera, don't rotate
 				if(abs(speed_correction) < ROTATION_THRESHOLD){
@@ -92,19 +91,19 @@ static THD_FUNCTION(Movement, arg) {
 				}
 
 				//applies the speed from the PI regulator and the correction for the rotation
-				right_motor_set_speed(SPEED_COEFF*speed - ROTATION_COEFF * speed_correction);
+				right_motor_set_speed(SPEED_COEFF*speed -ROTATION_COEFF * speed_correction);
 				left_motor_set_speed(SPEED_COEFF*speed + ROTATION_COEFF * speed_correction);
 
 				set_rgb_led(LED8,255,0,0);
 			}
 
-			// Retour après detection couleur
+			// half turn is an obstacle is detected
 			if((!get_distance_cm()) && obstacle_detected()&&(get_camera_height()==LOW_POS)){
 				set_rgb_led(LED8,0,0,255);
 				demi_tour();
 			}
 
-			//si pas de ligne et pas d'obstacle le robot ne bouge pas;
+			//if there is no line and no obstacle, epuck turns while he doesn't see a line;
 			if((!get_distance_cm()) && (!obstacle_detected())&&(get_camera_height()==LOW_POS)){
 				set_rgb_led(LED8,0,255,255);
 				po8030_advanced_config(FORMAT_RGB565, 0, LOW_POS, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
@@ -116,6 +115,7 @@ static THD_FUNCTION(Movement, arg) {
     	//100Hz
     	chThdSleepUntilWindowed(time, time + MS2ST(20));
     	}
+
         else{
         	chThdSleepMilliseconds(6000);
         }

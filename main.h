@@ -52,7 +52,7 @@ extern "C" {
 
 #define VITESSENULLE			0
 #define ROTATIONNULLE			0
-#define SPEED_ROT					800
+#define SPEED_ROT				800
 #define TIME_HALF_TURN			600 // [Milliseconds]
 
 //Camera
