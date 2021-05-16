@@ -13,7 +13,6 @@ CSRC += ./main.c \
 		./process_image.c \
 		./obstacle.c \
 		./audio_processing.c \
-		./communications.c \
 		./fft.c \
 		./move.c \
 

@@ -23,7 +23,6 @@
 
 #include <audio_processing.h>
 #include <fft.h>
-#include <communications.h>
 #include <process_image.h>
 #include <obstacle.h>
 #include <move.h>
