@@ -47,13 +47,14 @@ static const melody_t color={
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 
-
+//wait time_ms milliseconds, used to wait the end of actions
 void wait_ms(uint16_t time_ms){
      for(uint32_t i = 0 ; i < 21000000*time_ms/500 ; i++){
          __asm__ volatile ("nop");
      }
 }
 
+//stop the robots for 100ms
 void stop_100_ms(void){
 	right_motor_set_speed(0);
 	left_motor_set_speed(0);
@@ -66,7 +67,7 @@ void go_to_target(void){
 
 	pxtocm = PXTOCM_COLOR;
 	camera_height = HIGH_POS;
-	//travel_time corresponds to the time needed to reach the target at motor speed of 800
+	//travel_time corresponds to the time needed to reach the target at a motor speed of 800
 	uint16_t travel_time = distance_cm*TRAVELTIMECOEFF;
 	stop_100_ms();
 	right_motor_set_speed(800);
@@ -79,12 +80,9 @@ void go_to_target(void){
 	right_motor_set_speed(800);
 	left_motor_set_speed(800);
 	wait_ms(travel_time);
-
-//	//goes back on black line tracking mode
-//	select_target_color(1);
-
 }
 
+//set all the settings for a color detection
 void reset_high_cam(void){
 	camera_height = HIGH_POS;
 	pxtocm = PXTOCM_COLOR;
@@ -96,13 +94,16 @@ void reset_high_cam(void){
     uint8_t *img_buff_ptr = dcmi_get_last_image_ptr();
 }
 
+//Makes the robot turn to find a color
 void color_rot(void){
 	right_motor_set_speed(-50);
 	left_motor_set_speed(50);
 }
 
 /*
- *  Returns the line's width extracted from the image buffer given
+ *  Returns the line's width extracted from the image buffer given if 0 passed
+ *  as mode argument. Returns the sum of intensities in the detected line when
+ *  1 given.
  *  Returns 0 if line not found
  */
 uint16_t extract_line(uint8_t *buffer, uint8_t mode){
@@ -119,8 +120,6 @@ uint16_t extract_line(uint8_t *buffer, uint8_t mode){
 		width_slope = WIDTH_SLOPE_COLOR;
 		min_line_width = MIN_LINE_WIDTH_COLOR;
 	}
-
-//	static uint16_t last_width = PXTOCM_BLACK_LINE/GOAL_DISTANCE;
 
 	//performs an average
 	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){
@@ -188,6 +187,7 @@ uint16_t extract_line(uint8_t *buffer, uint8_t mode){
 	if (mode == 0){
 		return width;
 	}
+	//In color search mode, return the sum of intensity within the detected line
 	else{
 		mean = 0;
 		for(uint16_t i = begin ; i < end ; i++){
@@ -205,14 +205,13 @@ static THD_FUNCTION(CaptureImage, arg) {
     chRegSetThreadName(__FUNCTION__);
     (void)arg;
 
-	//Initialise la hauteur pour ligne noire au démarrage
+	//Init low camera for a black line research
 	po8030_advanced_config(FORMAT_RGB565, 0, LOW_POS, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
 
     while(1){
-//    	Change la hauteur avant de scanner si besoin
         //starts a capture
 		dcmi_capture_start();
 		//waits for the capture to be done
@@ -232,20 +231,16 @@ static THD_FUNCTION(ProcessImage, arg) {
 	uint8_t *img_buff_ptr;
 	uint8_t image[IMAGE_BUFFER_SIZE] = {0};
 	uint16_t lineWidth = 0;
-	//valeurs issues des masques
+	//temp variable to save intensities when a mask is applied
 	uint8_t red_temp;
 	uint8_t green_temp;
 	uint8_t blue_temp;
-
-//	bool send_to_computer = true;
 
     while(1){
     	//waits until an image has been captured
         chBSemWait(&image_ready_sem);
 		//gets the pointer to the array filled with the last image in RGB565    
-
 		img_buff_ptr = dcmi_get_last_image_ptr();
-
 		//Looking for black line
 		if ((target_color == 1)&&(camera_height == LOW_POS)){
 
@@ -276,7 +271,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 					blue_temp = (img_buff_ptr[i] & MSK_BLUE1);
 					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
 					blue_temp = (img_buff_ptr[i] & MSK_BLUE2);
-
+					//build a new filtered image
 					image[i/2] = green_temp + blue_temp;
 				}
 
@@ -289,6 +284,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 					red_temp = (img_buff_ptr[i] & MSK_RED1) >> 3;
 					green_temp = (img_buff_ptr[i] & MSK_GREEN1) << 2;
 					green_temp = (green_temp | ((img_buff_ptr[++i] & MSK_GREEN2) >> 6));
+					//build a new filtered image
 					image[i/2] = red_temp + green_temp;
 				}
 				blueMean = extract_line(image,MEAN_MODE);
@@ -358,6 +354,16 @@ void process_image_start(void){
 	chThdCreateStatic(waCaptureImage, sizeof(waCaptureImage), NORMALPRIO+1, CaptureImage, NULL);
 }
 
+
+//getters and setters
+
+/*
+ * start detection according to the parameter given
+ * 0 => red detection
+ * 1 => black line detection
+ * 2 => blue detection
+ *
+ */
 void select_target_color(uint8_t color_id) {
 	switch (color_id){
 			//target 0 = red detection
@@ -397,6 +403,12 @@ void select_target_color(uint8_t color_id) {
 		}
 }
 
+
+uint8_t get_target_color(void) {
+	return target_color;
+}
+
+
 uint16_t get_distance_cm(void){
 	return distance_cm;
 }
@@ -405,10 +417,6 @@ uint16_t get_line_position(void){
 	return line_position;
 }
 
-
-uint8_t get_target_color(void) {
-	return target_color;
-}
 
 void set_camera_height(uint16_t height){
 	camera_height=height;

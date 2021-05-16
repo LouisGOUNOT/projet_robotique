@@ -1,9 +1,5 @@
-
-
 #ifndef AUDIO_PROCESSING_H
 #define AUDIO_PROCESSING_H
-
-
 #define FFT_SIZE 	1024
 
 typedef enum {
@@ -17,7 +13,6 @@ typedef enum {
 	RIGHT_OUTPUT,
 	BACK_OUTPUT
 } BUFFER_NAME_t;
-
 
 void processAudioData(int16_t *data, uint16_t num_samples);
 
