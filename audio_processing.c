@@ -7,7 +7,6 @@
 #include <motors.h>
 #include <audio/microphone.h>
 #include <audio_processing.h>
-#include <communications.h>
 #include <fft.h>
 #include <arm_math.h>
 #include <process_image.h>
@@ -21,35 +20,34 @@ static BSEMAPHORE_DECL(sendToComputer_sem, TRUE);
 //2 times FFT_SIZE because these arrays contain complex numbers (real + imaginary)
 static float micLeft_cmplx_input[2 * FFT_SIZE];
 static float micRight_cmplx_input[2 * FFT_SIZE];
-static float micFront_cmplx_input[2 * FFT_SIZE];
 static float micBack_cmplx_input[2 * FFT_SIZE];
 //Arrays containing the computed magnitude of the complex numbers
 static float micLeft_output[FFT_SIZE];
 static float micRight_output[FFT_SIZE];
-static float micFront_output[FFT_SIZE];
 static float micBack_output[FFT_SIZE];
 static uint8_t compteur_rouge = 0 ;
 static uint8_t compteur_bleu = 0 ;
-static uint8_t couleur_entendue = 1;
 
 #define MIN_VALUE_THRESHOLD	10000
 
 #define MIN_FREQ		22	//we don't analyze before this index to not use resources for nothing
-#define FREQ_RED	    26	//406
-#define FREQ_GREEN		32	//850
-#define FREQ_BLUE		38	//602
+#define FREQ_RED	    26	//406Hz to find red
+#define FREQ_GREEN		32	//850Hz noise range that souhld not be detected
+#define FREQ_BLUE		38	//602Hz to find blue
 #define MAX_FREQ		42	//we don't analyze after this index to not use resources for nothing
 
+//Smalls bandwith for colors
 #define FREQ_RED_L		(FREQ_RED-1)
 #define FREQ_RED_H		(FREQ_RED+1)
-#define FREQ_GREEN_L			(FREQ_GREEN-5)
-#define FREQ_GREEN_H			(FREQ_GREEN+5)
 #define FREQ_BLUE_L		(FREQ_BLUE-1)
 #define FREQ_BLUE_H		(FREQ_BLUE+1)
+// Large bandwidth for noise
+#define FREQ_GREEN_L	(FREQ_GREEN-5)
+#define FREQ_GREEN_H	(FREQ_GREEN+5)
 
 /*
-*	Simple function used to detect the highest value in a buffer
-*	and to execute a motor command depending on it
+*	Detects the highest value in a buffer and starts color detection if
+*	the detected frequency corresponds to red or blue
 */
 void sound_remote(float* data){
 	float max_norm = MIN_VALUE_THRESHOLD;
@@ -72,18 +70,17 @@ void sound_remote(float* data){
 		else {
 			compteur_bleu = 0;
 		}
+		//red detected 21 time => start research
 		if (compteur_rouge > 20){
 			compteur_rouge = 0;
-//			set_rgb_led(LED2,255,0,0);
 			select_target_color(0);
 		}
 
 	}
-	//Passe bande
+	//reset if noise detected
 	else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
 		compteur_rouge = 0;
 		compteur_bleu = 0;
-//		set_rgb_led(LED2,0,0,0);
 	}
 	//Target blue
 	else if(max_norm_index >= FREQ_BLUE_L && max_norm_index <= FREQ_BLUE_H){
@@ -93,13 +90,11 @@ void sound_remote(float* data){
 		else {
 			compteur_rouge = 0;
 		}
+		//blue detected 21 time => start research
 		if (compteur_bleu > 20){
 			compteur_bleu = 0;
-//			set_rgb_led(LED2,0,0,255);
 			select_target_color(2);
 		}
-
-
 		po8030_set_rgb_gain(0x50, 0x50,0x00);
 	}
 }
@@ -110,7 +105,7 @@ void sound_remote(float* data){
 *	
 *	params :
 *	int16_t *data			Buffer containing 4 times 160 samples. the samples are sorted by micro
-*							so we have [micRight1, micLeft1, micBack1, micFront1, micRight2, etc...]
+*							so we have [micRight1, micLeft1, micBack1, micRight2, etc...]
 *	uint16_t num_samples	Tells how many data we get in total (should always be 640)
 */
 void processAudioData(int16_t *data, uint16_t num_samples){
@@ -132,14 +127,12 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		micRight_cmplx_input[nb_samples] = (float)data[i + MIC_RIGHT];
 		micLeft_cmplx_input[nb_samples] = (float)data[i + MIC_LEFT];
 		micBack_cmplx_input[nb_samples] = (float)data[i + MIC_BACK];
-		micFront_cmplx_input[nb_samples] = (float)data[i + MIC_FRONT];
 
 		nb_samples++;
 
 		micRight_cmplx_input[nb_samples] = 0;
 		micLeft_cmplx_input[nb_samples] = 0;
 		micBack_cmplx_input[nb_samples] = 0;
-		micFront_cmplx_input[nb_samples] = 0;
 
 		nb_samples++;
 
@@ -158,7 +151,6 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 
 		doFFT_optimized(FFT_SIZE, micRight_cmplx_input);
 		doFFT_optimized(FFT_SIZE, micLeft_cmplx_input);
-		doFFT_optimized(FFT_SIZE, micFront_cmplx_input);
 		doFFT_optimized(FFT_SIZE, micBack_cmplx_input);
 
 		/*	Magnitude processing
@@ -170,7 +162,6 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		*/
 		arm_cmplx_mag_f32(micRight_cmplx_input, micRight_output, FFT_SIZE);
 		arm_cmplx_mag_f32(micLeft_cmplx_input, micLeft_output, FFT_SIZE);
-//		arm_cmplx_mag_f32(micFront_cmplx_input, micFront_output, FFT_SIZE);
 		arm_cmplx_mag_f32(micBack_cmplx_input, micBack_output, FFT_SIZE);
 
 		//sends only one FFT result over 10 for 1 mic to not flood the computer
@@ -198,9 +189,6 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	else if (name == RIGHT_CMPLX_INPUT){
 		return micRight_cmplx_input;
 	}
-//	else if (name == FRONT_CMPLX_INPUT){
-//		return micFront_cmplx_input;
-//	}
 	else if (name == BACK_CMPLX_INPUT){
 		return micBack_cmplx_input;
 	}
@@ -210,9 +198,6 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	else if (name == RIGHT_OUTPUT){
 		return micRight_output;
 	}
-//	else if (name == FRONT_OUTPUT){
-//		return micFront_output;
-//	}
 	else if (name == BACK_OUTPUT){
 		return micBack_output;
 	}
