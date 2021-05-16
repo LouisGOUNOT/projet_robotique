@@ -91,7 +91,6 @@ void reset_high_cam(void){
 	po8030_set_contrast(55);
 	//Clears buffer with black line
     chBSemWait(&image_ready_sem);
-    uint8_t *img_buff_ptr = dcmi_get_last_image_ptr();
 }
 
 //Makes the robot turn to find a color

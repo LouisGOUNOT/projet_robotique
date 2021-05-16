@@ -1,3 +1,11 @@
+/*
+ * fft.h
+ *
+ * Created on: 15 mai 2021
+ * Author: Imported from TP5
+ *
+ * Make computation for AudirProcessing
+ */
 #ifndef FFT_H
 #define FFT_H
 

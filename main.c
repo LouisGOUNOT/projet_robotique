@@ -1,3 +1,11 @@
+/*
+ * main.c
+ *
+ * Created on: 15 mai 2021
+ * Author: Clement Albert & Louis Gounot
+ *
+ * init threads and configs
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,33 +67,35 @@ int main(void)
     usb_start();
     //Start the SPI Communication
     spi_comm_start();
+
     //starts the camera
     dcmi_start();
     po8030_start();
-    //inits the motors
-    motors_init();
     //stars the threads for the pi regulator and the processing of the image
     process_image_start();
+
+    //inits the motors & displacement
+    motors_init();
+	movement_start();
+
     //start the threads for the detector of proximity
     proximity_start();
     obstacle_start();
+
     //start the threads for the audio output
 	// Powers ON the alimentation of the speaker
 	dac_power_speaker(true);
 	dac_start();
 	//creates the Melody thread
 	playMelodyStart();
-    //temp tab used to store values in complex_float format
-    //needed bx doFFT_c
-    static complex_float temp_tab[FFT_SIZE];
-    //send_tab is used to save the state of the buffer to send (double buffering)
-    //to avoid modifications of the buffer while sending it
-    static float send_tab[FFT_SIZE];
+
 	//starts the microphones processing thread.
 	//it calls the callback given in parameter when samples are ready
 	mic_start(&processAudioData);
-	movement_start();
+
+	//Unused but does not work if we remove it
 	VL53L0X_start();
+
     /* Infinite loop. */
     while (1) {
         chThdSleepMilliseconds(1000);

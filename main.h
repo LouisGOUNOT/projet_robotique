@@ -1,3 +1,11 @@
+/*
+ * main.h
+ *
+ * Created on: 15 mai 2021
+ * Author: Clement Albert & Louis Gounot
+ *
+ * init threads and configs
+ */
 #ifndef MAIN_H
 #define MAIN_H
 
@@ -22,7 +30,6 @@ extern "C" {
 #define PXTOCM_BLACK_LINE		1200.0f //experimental value
 #define PXTOCM_COLOR			700.0f //experimental value
 #define GOAL_DISTANCE 			4.0f// [cm]
-#define MAX_DISTANCE 			30.0f// [cm]
 #define ERROR_THRESHOLD			0.1f	//[cm] because of the noise of the camera
 #define KP						800.0f
 #define KI 						3.5f	//must not be zero
@@ -33,23 +40,12 @@ extern "C" {
 
 #define NUMSENSOR               8
 #define REACHED_FRONT           1
-#define REACHED_FRONT45         2
-#define REACHED_LEFT          	3
-#define REACHED_RIGHT           4
 
 //proximity sensors id
 #define FRONT_RIGHT             0
-#define FRONT_RIGHT45           1
-#define RIGHT                   2
-#define BACK_RIGHT              3
-#define BACK_LEFT               4
-#define LEFT                    5
-#define FRONT_LEFT45            6
 #define FRONT_LEFT              7
 
-#define VITESSENULLE			0
-#define ROTATIONNULLE			0
-#define SPEED_ROT					800
+#define SPEED_ROT				800
 #define TIME_HALF_TURN			600 // [Milliseconds]
 
 //Camera

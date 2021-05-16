@@ -1,3 +1,11 @@
+/*
+ * fft.c
+ *
+ * Created on: 15 mai 2021
+ * Author: Imported from TP5
+ *
+ * Make computation for AudirProcessing
+ */
 #include "ch.h"
 #include "hal.h"
 #include <main.h>
